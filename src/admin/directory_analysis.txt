@@ -1,0 +1,1612 @@
+מבנה התיקייה:
+admin
+  Controllers
+    adminCourseController.ts
+    adminDashboardController.ts
+    adminGradeController.ts
+    adminLeadController.ts
+    adminMessageController.ts
+    adminPaymentController.ts
+    adminStatisticsController.ts
+    adminSystemSettingsController.ts
+    adminTaskController.ts
+    adminUserController.ts
+  directory_analysis.txt
+  models
+    Course.ts
+    SystemSettings.ts
+  routes
+    adminDashboardRoutes.ts
+    adminRoutes.ts
+    adminStatisticsRoutes.ts
+    adminSystemSettingsRoutes.ts
+
+תוכן הקבצים:
+
+==================================================
+Contents of C:\Users\eytan\Desktop\hebrewclubweb\server\src\admin\directory_analysis.txt:
+==================================================
+מבנה התיקייה:
+admin
+  Controller
+    adminCourseController.ts
+    adminGradeController.ts
+    adminLeadController.ts
+    adminMessageController.ts
+    adminPaymentController.ts
+    adminStatisticsController.ts
+    adminSystemSettingsController.ts
+    adminTaskController.ts
+    adminUserController.ts
+  models
+    SystemSettings.ts
+  routes
+    adminRoutes.ts
+    adminStatisticsRoutes.ts
+    adminSystemSettingsRoutes.ts
+
+תוכן הקבצים:
+
+==================================================
+Contents of C:\Users\eytan\Desktop\hebrewclubweb\server\src\admin\Controller\adminCourseController.ts:
+==================================================
+import { Request, Response } from 'express';
+import Course from '../../models/Course';
+
+export const getCourseManagementData = async (req: Request, res: Response) => {
+  try {
+    const courses = await Course.find();
+    res.json(courses);
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching course data', error });
+  }
+};
+
+export const createCourse = async (req: Request, res: Response) => {
+  // Implementation for creating a new course
+};
+
+export const updateCourse = async (req: Request, res: Response) => {
+  // Implementation for updating a course
+};
+
+export const deleteCourse = async (req: Request, res: Response) => {
+  // Implementation for deleting a course
+};
+
+==================================================
+Contents of C:\Users\eytan\Desktop\hebrewclubweb\server\src\admin\Controller\adminGradeController.ts:
+==================================================
+import { Request, Response } from 'express';
+import Grade from '../../models/Grade';
+
+export const getGradeManagementData = async (req: Request, res: Response) => {
+  try {
+    const grades = await Grade.find();
+    res.json(grades);
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching grade data', error });
+  }
+};
+
+export const createGrade = async (req: Request, res: Response) => {
+  // Implementation for creating a new grade
+};
+
+export const updateGrade = async (req: Request, res: Response) => {
+  // Implementation for updating a grade
+};
+
+export const deleteGrade = async (req: Request, res: Response) => {
+  // Implementation for deleting a grade
+};
+
+==================================================
+Contents of C:\Users\eytan\Desktop\hebrewclubweb\server\src\admin\Controller\adminLeadController.ts:
+==================================================
+import { Request, Response } from 'express';
+import Lead from '../../models/Lead';
+
+export const getLeadManagementData = async (req: Request, res: Response) => {
+  try {
+    const leads = await Lead.find();
+    res.json(leads);
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching lead data', error });
+  }
+};
+
+export const createLead = async (req: Request, res: Response) => {
+  // Implementation for creating a new lead
+};
+
+export const updateLead = async (req: Request, res: Response) => {
+  // Implementation for updating a lead
+};
+
+export const deleteLead = async (req: Request, res: Response) => {
+  // Implementation for deleting a lead
+};
+
+==================================================
+Contents of C:\Users\eytan\Desktop\hebrewclubweb\server\src\admin\Controller\adminMessageController.ts:
+==================================================
+import { Request, Response } from 'express';
+import Message from '../../models/Message';
+
+export const getMessageManagementData = async (req: Request, res: Response) => {
+  try {
+    const messages = await Message.find();
+    res.json(messages);
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching message data', error });
+  }
+};
+
+export const sendAdminMessage = async (req: Request, res: Response) => {
+  // Implementation for sending an admin message
+};
+
+export const deleteMessage = async (req: Request, res: Response) => {
+  // Implementation for deleting a message
+};
+
+==================================================
+Contents of C:\Users\eytan\Desktop\hebrewclubweb\server\src\admin\Controller\adminPaymentController.ts:
+==================================================
+import { Request, Response } from 'express';
+import Payment from '../../models/Payment';
+
+export const getPaymentManagementData = async (req: Request, res: Response) => {
+  try {
+    const payments = await Payment.find();
+    res.json(payments);
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching payment data', error });
+  }
+};
+
+export const processPayment = async (req: Request, res: Response) => {
+  // Implementation for processing a payment
+};
+
+export const refundPayment = async (req: Request, res: Response) => {
+  // Implementation for refunding a payment
+};
+
+==================================================
+Contents of C:\Users\eytan\Desktop\hebrewclubweb\server\src\admin\Controller\adminStatisticsController.ts:
+==================================================
+import { Request, Response } from 'express';
+import User from '../../models/User';
+import Course from '../../models/Course';
+import Payment from '../../models/Payment';
+import Lead from '../../models/Lead';
+
+export const getDashboardStats = async (req: Request, res: Response) => {
+  try {
+    const userCount = await User.countDocuments();
+    const courseCount = await Course.countDocuments({ status: 'active' });
+    const totalRevenue = await Payment.aggregate([
+      { $group: { _id: null, total: { $sum: "$amount" } } }
+    ]);
+    const recentPayments = await Payment.find().sort({ createdAt: -1 }).limit(5);
+    const newLeadsCount = await Lead.countDocuments({ 
+      createdAt: { $gte: new Date(Date.now() - 30*24*60*60*1000) }
+    });
+    const userGrowth = await User.aggregate([
+      {
+        $group: {
+          _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
+          count: { $sum: 1 }
+        }
+      },
+      { $sort: { _id: 1 } },
+      { $limit: 30 }
+    ]);
+
+    res.json({
+      userCount,
+      courseCount,
+      totalRevenue: totalRevenue[0]?.total || 0,
+      recentPayments,
+      newLeadsCount,
+      userGrowth
+    });
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching dashboard stats', error });
+  }
+};
+
+export const getUserGrowthStats = async (req: Request, res: Response) => {
+  try {
+    const userGrowth = await User.aggregate([
+      {
+        $group: {
+          _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
+          count: { $sum: 1 }
+        }
+      },
+      { $sort: { _id: 1 } },
+      { $limit: 30 }
+    ]);
+    res.json(userGrowth);
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching user growth stats', error });
+  }
+};
+
+export const getCoursePopularityStats = async (req: Request, res: Response) => {
+  try {
+    const coursePopularity = await Course.aggregate([
+      {
+        $project: {
+          title: 1,
+          studentCount: { $size: "$students" }
+        }
+      },
+      { $sort: { studentCount: -1 } },
+      { $limit: 10 }
+    ]);
+    res.json(coursePopularity);
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching course popularity stats', error });
+  }
+};
+
+export const getRevenueStats = async (req: Request, res: Response) => {
+  try {
+    const revenueStats = await Payment.aggregate([
+      {
+        $group: {
+          _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
+          total: { $sum: "$amount" }
+        }
+      },
+      { $sort: { _id: 1 } },
+      { $limit: 30 }
+    ]);
+    res.json(revenueStats);
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching revenue stats', error });
+  }
+};
+
+==================================================
+Contents of C:\Users\eytan\Desktop\hebrewclubweb\server\src\admin\Controller\adminSystemSettingsController.ts:
+==================================================
+import { Request, Response } from 'express';
+import SystemSettings from '../models/SystemSettings';
+
+export const updateSystemSettings = async (req: Request, res: Response) => {
+  try {
+    const { settingKey, settingValue } = req.body;
+    const updatedSetting = await SystemSettings.findOneAndUpdate(
+      { key: settingKey },
+      { value: settingValue },
+      { new: true, upsert: true }
+    );
+    res.json(updatedSetting);
+  } catch (error) {
+    res.status(500).json({ message: 'Error updating system settings', error });
+  }
+};
+
+export const getSystemSettings = async (req: Request, res: Response) => {
+  try {
+    const settings = await SystemSettings.find();
+    res.json(settings);
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching system settings', error });
+  }
+};
+
+==================================================
+Contents of C:\Users\eytan\Desktop\hebrewclubweb\server\src\admin\Controller\adminTaskController.ts:
+==================================================
+import { Request, Response } from 'express';
+import Assignment from '../../models/Assignment';
+
+export const getTaskManagementData = async (req: Request, res: Response) => {
+  try {
+    const assignments = await Assignment.find();
+    res.json(assignments);
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching task data', error });
+  }
+};
+
+export const createTask = async (req: Request, res: Response) => {
+  // Implementation for creating a new task
+};
+
+export const updateTask = async (req: Request, res: Response) => {
+  // Implementation for updating a task
+};
+
+export const deleteTask = async (req: Request, res: Response) => {
+  // Implementation for deleting a task
+};
+
+==================================================
+Contents of C:\Users\eytan\Desktop\hebrewclubweb\server\src\admin\Controller\adminUserController.ts:
+==================================================
+import { Request, Response } from 'express';
+import User from '../../models/User';
+import bcrypt from 'bcryptjs';
+
+export const getUserManagementData = async (req: Request, res: Response) => {
+  try {
+    const users = await User.find().select('-password');
+    res.json(users);
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching user data', error });
+  }
+};
+
+export const createUser = async (req: Request, res: Response) => {
+  try {
+    const { name, email, username, password, role } = req.body;
+    
+    const existingUser = await User.findOne({ $or: [{ email }, { username }] });
+    if (existingUser) {
+      return res.status(400).json({ message: 'משתמש עם אימייל או שם משתמש זה כבר קיים' });
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    const newUser = new User({
+      name,
+      email,
+      username,
+      password: hashedPassword,
+      role
+    });
+
+    await newUser.save();
+    
+    res.status(201).json({ message: 'משתמש נוצר בהצלחה', user: { name: newUser.name, email: newUser.email, username: newUser.username, role: newUser.role } });
+  } catch (error) {
+    console.error('Error creating user:', error);
+    res.status(500).json({ message: 'שגיאה בשרת בעת יצירת משתמש חדש' });
+  }
+};
+
+export const updateUser = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { name, email, username, role } = req.body;
+
+    const user = await User.findByIdAndUpdate(id, { name, email, username, role }, { new: true }).select('-password');
+
+    if (!user) {
+      return res.status(404).json({ message: 'משתמש לא נמצא' });
+    }
+
+    res.json({ message: 'פרטי המשתמש עודכנו בהצלחה', user });
+  } catch (error) {
+    console.error('Error updating user:', error);
+    res.status(500).json({ message: 'שגיאה בשרת בעת עדכון פרטי המשתמש' });
+  }
+};
+
+export const deleteUser = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+
+    const user = await User.findByIdAndDelete(id);
+
+    if (!user) {
+      return res.status(404).json({ message: 'משתמש לא נמצא' });
+    }
+
+    res.json({ message: 'המשתמש נמחק בהצלחה' });
+  } catch (error) {
+    console.error('Error deleting user:', error);
+    res.status(500).json({ message: 'שגיאה בשרת בעת מחיקת המשתמש' });
+  }
+};
+
+export const setUserRole = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { userId, role } = req.body;
+
+    if (!['user', 'admin'].includes(role)) {
+      res.status(400).json({ message: 'תפקיד לא חוקי', code: 'INVALID_ROLE' });
+      return;
+    }
+
+    const user = await User.findByIdAndUpdate(userId, { role }, { new: true });
+
+    if (!user) {
+      res.status(404).json({ message: 'משתמש לא נמצא', code: 'USER_NOT_FOUND' });
+      return;
+    }
+
+    res.json({ message: 'תפקיד המשתמש עודכן בהצלחה', user });
+  } catch (err) {
+    console.error('שגיאה בעדכון תפקיד משתמש:', err);
+    res.status(500).json({ message: 'שגיאת שרת', code: 'SERVER_ERROR' });
+  }
+};
+
+==================================================
+Contents of C:\Users\eytan\Desktop\hebrewclubweb\server\src\admin\models\SystemSettings.ts:
+==================================================
+import mongoose, { Schema, Document } from 'mongoose';
+
+export interface ISystemSettings extends Document {
+  key: string;
+  value: any;
+}
+
+const SystemSettingsSchema: Schema = new Schema({
+  key: { type: String, required: true, unique: true },
+  value: { type: Schema.Types.Mixed, required: true },
+});
+
+export default mongoose.model<ISystemSettings>('SystemSettings', SystemSettingsSchema);
+
+==================================================
+Contents of C:\Users\eytan\Desktop\hebrewclubweb\server\src\admin\routes\adminRoutes.ts:
+==================================================
+import express from 'express';
+import { authenticateToken, adminCheck } from '../../middleware/authMiddleware';
+import * as adminUserController from '../Controller/adminUserController';
+import * as adminCourseController from '../Controller/adminCourseController';
+import * as adminTaskController from '../Controller/adminTaskController';
+import * as adminGradeController from '../Controller/adminGradeController';
+import * as adminMessageController from '../Controller/adminMessageController';
+import * as adminPaymentController from '../Controller/adminPaymentController';
+import * as adminLeadController from '../Controller/adminLeadController';
+import * as adminStatisticsController from '../Controller/adminStatisticsController';
+
+const router = express.Router();
+
+// Apply authentication and admin role check to all routes
+router.use(authenticateToken, adminCheck);
+
+// User management routes
+router.get('/users', adminUserController.getUserManagementData);
+router.post('/users', adminUserController.createUser);
+router.put('/users/:id', adminUserController.updateUser);
+router.delete('/users/:id', adminUserController.deleteUser);
+router.put('/users/:id/role', adminUserController.setUserRole);
+
+// Course management routes
+router.get('/courses', adminCourseController.getCourseManagementData);
+router.post('/courses', adminCourseController.createCourse);
+router.put('/courses/:id', adminCourseController.updateCourse);
+router.delete('/courses/:id', adminCourseController.deleteCourse);
+
+// Task management routes
+router.get('/tasks', adminTaskController.getTaskManagementData);
+router.post('/tasks', adminTaskController.createTask);
+router.put('/tasks/:id', adminTaskController.updateTask);
+router.delete('/tasks/:id', adminTaskController.deleteTask);
+
+// Grade management routes
+router.get('/grades', adminGradeController.getGradeManagementData);
+router.post('/grades', adminGradeController.createGrade);
+router.put('/grades/:id', adminGradeController.updateGrade);
+router.delete('/grades/:id', adminGradeController.deleteGrade);
+
+// Message management routes
+router.get('/messages', adminMessageController.getMessageManagementData);
+router.post('/messages', adminMessageController.sendAdminMessage);
+router.delete('/messages/:id', adminMessageController.deleteMessage);
+
+// Payment management routes
+router.get('/payments', adminPaymentController.getPaymentManagementData);
+router.post('/payments/process', adminPaymentController.processPayment);
+router.post('/payments/refund', adminPaymentController.refundPayment);
+
+// Lead management routes
+router.get('/leads', adminLeadController.getLeadManagementData);
+router.post('/leads', adminLeadController.createLead);
+router.put('/leads/:id', adminLeadController.updateLead);
+router.delete('/leads/:id', adminLeadController.deleteLead);
+
+// Dashboard routes
+router.get('/dashboard', adminStatisticsController.getDashboardStats);
+router.get('/user-growth', adminStatisticsController.getUserGrowthStats);
+router.get('/course-popularity', adminStatisticsController.getCoursePopularityStats);
+router.get('/revenue', adminStatisticsController.getRevenueStats);
+
+export default router;
+
+==================================================
+Contents of C:\Users\eytan\Desktop\hebrewclubweb\server\src\admin\routes\adminStatisticsRoutes.ts:
+==================================================
+import express from 'express';
+import { authenticateToken, roleCheck } from '../../middleware/authMiddleware';
+import * as adminStatisticsController from '../../admin/Controller/adminStatisticsController';
+
+const router = express.Router();
+
+router.use(authenticateToken, roleCheck(['admin']));
+
+router.get('/dashboard', adminStatisticsController.getDashboardStats);
+router.get('/user-growth', adminStatisticsController.getUserGrowthStats);
+router.get('/course-popularity', adminStatisticsController.getCoursePopularityStats);
+router.get('/revenue', adminStatisticsController.getRevenueStats);
+
+export default router;
+
+==================================================
+Contents of C:\Users\eytan\Desktop\hebrewclubweb\server\src\admin\routes\adminSystemSettingsRoutes.ts:
+==================================================
+import express from 'express';
+import { authenticateToken, roleCheck } from '../../middleware/authMiddleware';
+import * as adminSystemSettingsController from '../../admin/Controller/adminSystemSettingsController';
+
+const router = express.Router();
+
+router.use(authenticateToken, roleCheck(['admin']));
+
+router.put('/', adminSystemSettingsController.updateSystemSettings);
+router.get('/', adminSystemSettingsController.getSystemSettings);
+
+export default router;
+
+
+==================================================
+Contents of C:\Users\eytan\Desktop\hebrewclubweb\server\src\admin\Controllers\adminCourseController.ts:
+==================================================
+import { Request, Response } from 'express';
+import Course from '../../models/Course';  // Assuming you have a Course model
+import { Course as CourseType, ApiResponse, PaginatedResponse } from '../../types/models';
+
+export const getCourseManagementData = async (req: Request, res: Response) => {
+  try {
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 10;
+
+    const totalCount = await Course.countDocuments();
+    const totalPages = Math.ceil(totalCount / limit);
+    const skip = (page - 1) * limit;
+
+    const courses = await Course.find()
+      .skip(skip)
+      .limit(limit)
+      .populate('instructor', 'name');
+
+    const responseData: PaginatedResponse<CourseType[]> = {
+      success: true,
+      data: courses,
+      totalCount,
+      pageSize: limit,
+      currentPage: page,
+      totalPages
+    };
+
+    res.json(responseData);
+  } catch (error) {
+    console.error('Error fetching course data:', error);
+    res.status(500).json({ success: false, error: 'Error fetching course data' } as ApiResponse<null>);
+  }
+};
+
+export const createCourse = async (req: Request, res: Response) => {
+  try {
+    const { title, description, instructor, duration, level, price, tags } = req.body;
+    
+    const newCourse = new Course({
+      title,
+      description,
+      instructor,
+      duration,
+      level,
+      price,
+      tags,
+      users: [],
+      completionRate: 0,
+      rating: 0
+    });
+
+    await newCourse.save();
+    
+    res.status(201).json({ 
+      success: true, 
+      data: newCourse 
+    } as ApiResponse<CourseType>);
+  } catch (error) {
+    console.error('Error creating course:', error);
+    res.status(500).json({ success: false, error: 'Server error while creating new course' } as ApiResponse<null>);
+  }
+};
+
+export const updateCourse = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const updateData = req.body;
+
+    const course = await Course.findByIdAndUpdate(id, updateData, { new: true });
+
+    if (!course) {
+      return res.status(404).json({ success: false, error: 'Course not found' } as ApiResponse<null>);
+    }
+
+    res.json({ 
+      success: true, 
+      data: course
+    } as ApiResponse<CourseType>);
+  } catch (error) {
+    console.error('Error updating course:', error);
+    res.status(500).json({ success: false, error: 'Server error while updating course' } as ApiResponse<null>);
+  }
+};
+
+export const deleteCourse = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+
+    const course = await Course.findByIdAndDelete(id);
+
+    if (!course) {
+      return res.status(404).json({ success: false, error: 'Course not found' } as ApiResponse<null>);
+    }
+
+    res.json({ success: true, message: 'Course deleted successfully' } as ApiResponse<null>);
+  } catch (error) {
+    console.error('Error deleting course:', error);
+    res.status(500).json({ success: false, error: 'Server error while deleting course' } as ApiResponse<null>);
+  }
+};
+
+export const addUserToCourse = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { courseId, userId } = req.body;
+    const course = await Course.findById(courseId);
+
+    if (!course) {
+      res.status(404).json({ success: false, error: 'Course not found' } as ApiResponse<null>);
+      return;
+    }
+
+    if (!course.users.includes(userId)) {
+      course.users.push(userId);
+      await course.save();
+    }
+
+    res.json({ 
+      success: true, 
+      data: course 
+    } as ApiResponse<CourseType>);
+  } catch (err) {
+    console.error('Error adding user to course:', err);
+    res.status(500).json({ success: false, error: 'Server error' } as ApiResponse<null>);
+  }
+};
+
+export const removeUserFromCourse = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { courseId, userId } = req.body;
+    const course = await Course.findById(courseId);
+
+    if (!course) {
+      res.status(404).json({ success: false, error: 'Course not found' } as ApiResponse<null>);
+      return;
+    }
+
+    course.users = course.users.filter(user => user.toString() !== userId);
+    await course.save();
+
+    res.json({ 
+      success: true, 
+      data: course 
+    } as ApiResponse<CourseType>);
+  } catch (err) {
+    console.error('Error removing user from course:', err);
+    res.status(500).json({ success: false, error: 'Server error' } as ApiResponse<null>);
+  }
+};
+
+==================================================
+Contents of C:\Users\eytan\Desktop\hebrewclubweb\server\src\admin\Controllers\adminDashboardController.ts:
+==================================================
+import { Request, Response } from 'express';
+import User from '../../models/User';
+import Course from '../../models/Course';
+import Payment from '../../models/Payment';
+import Lead from '../../models/Lead';
+
+export const getDashboardStats = async (req: Request, res: Response) => {
+  try {
+    const userCount = await User.countDocuments();
+    const courseCount = await Course.countDocuments();
+    const totalRevenue = await Payment.aggregate([
+      { $group: { _id: null, total: { $sum: "$amount" } } }
+    ]);
+    const newLeadsCount = await Lead.countDocuments({ 
+      createdAt: { $gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) }
+    });
+
+    res.json({
+      userCount,
+      courseCount,
+      totalRevenue: totalRevenue[0]?.total || 0,
+      newLeadsCount
+    });
+  } catch (error) {
+    console.error('Error fetching dashboard stats:', error);
+    res.status(500).json({ message: 'Error fetching dashboard stats', error });
+  }
+};
+
+==================================================
+Contents of C:\Users\eytan\Desktop\hebrewclubweb\server\src\admin\Controllers\adminGradeController.ts:
+==================================================
+import { Request, Response } from 'express';
+import Grade from '../../models/Grade';
+import { Grade as GradeType, ApiResponse } from '../../types/models';
+
+export const getGradeManagementData = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const grades = await Grade.find()
+      .populate('userId', 'name email')
+      .populate('courseId', 'title')
+      .populate('assignmentId', 'title');
+    res.json({ success: true, data: grades } as ApiResponse<GradeType[]>);
+  } catch (error) {
+    res.status(500).json({ success: false, error: 'Error fetching grade data' } as ApiResponse<null>);
+  }
+};
+
+export const createGrade = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { userId, courseId, assignmentId, score, feedback } = req.body;
+    const newGrade = new Grade({
+      userId,
+      courseId,
+      assignmentId,
+      score,
+      feedback,
+      submittedAt: new Date(),
+      gradedAt: new Date()
+    });
+    await newGrade.save();
+    res.status(201).json({ success: true, data: newGrade } as ApiResponse<GradeType>);
+  } catch (error) {
+    res.status(500).json({ success: false, error: 'Error creating grade' } as ApiResponse<null>);
+  }
+};
+
+export const updateGrade = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const { score, feedback } = req.body;
+    const updatedGrade = await Grade.findByIdAndUpdate(
+      id,
+      { score, feedback, gradedAt: new Date() },
+      { new: true }
+    )
+      .populate('userId', 'name email')
+      .populate('courseId', 'title')
+      .populate('assignmentId', 'title');
+    if (!updatedGrade) {
+      res.status(404).json({ success: false, error: 'Grade not found' } as ApiResponse<null>);
+      return;
+    }
+    res.json({ success: true, data: updatedGrade } as ApiResponse<GradeType>);
+  } catch (error) {
+    res.status(500).json({ success: false, error: 'Error updating grade' } as ApiResponse<null>);
+  }
+};
+
+export const deleteGrade = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const deletedGrade = await Grade.findByIdAndDelete(id);
+    if (!deletedGrade) {
+      res.status(404).json({ success: false, error: 'Grade not found' } as ApiResponse<null>);
+      return;
+    }
+    res.json({ success: true, message: 'Grade deleted successfully' } as ApiResponse<null>);
+  } catch (error) {
+    res.status(500).json({ success: false, error: 'Error deleting grade' } as ApiResponse<null>);
+  }
+};
+
+==================================================
+Contents of C:\Users\eytan\Desktop\hebrewclubweb\server\src\admin\Controllers\adminLeadController.ts:
+==================================================
+import { Request, Response } from 'express';
+import Lead from '../../models/Lead';
+import { Lead as LeadType, ApiResponse } from '../../types/models';
+
+export const getLeadManagementData = async (req: Request, res: Response) => {
+  try {
+    const leads = await Lead.find();
+    res.json({ success: true, data: leads } as ApiResponse<LeadType[]>);
+  } catch (error) {
+    res.status(500).json({ success: false, error: 'Error fetching lead data' } as ApiResponse<null>);
+  }
+};
+
+export const createLead = async (req: Request, res: Response) => {
+  try {
+    const { name, email, phone, courseInterest, notes } = req.body;
+    const newLead = new Lead({
+      name,
+      email,
+      phone,
+      courseInterest,
+      status: 'new',
+      notes
+    });
+    await newLead.save();
+    res.status(201).json({ success: true, data: newLead } as ApiResponse<LeadType>);
+  } catch (error) {
+    res.status(500).json({ success: false, error: 'Error creating lead' } as ApiResponse<null>);
+  }
+};
+
+export const updateLead = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { name, email, phone, courseInterest, status, notes } = req.body;
+    const updatedLead = await Lead.findByIdAndUpdate(
+      id,
+      { name, email, phone, courseInterest, status, notes },
+      { new: true }
+    );
+    if (!updatedLead) {
+      return res.status(404).json({ success: false, error: 'Lead not found' } as ApiResponse<null>);
+    }
+    res.json({ success: true, data: updatedLead } as ApiResponse<LeadType>);
+  } catch (error) {
+    res.status(500).json({ success: false, error: 'Error updating lead' } as ApiResponse<null>);
+  }
+};
+
+export const deleteLead = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const deletedLead = await Lead.findByIdAndDelete(id);
+    if (!deletedLead) {
+      return res.status(404).json({ success: false, error: 'Lead not found' } as ApiResponse<null>);
+    }
+    res.json({ success: true, message: 'Lead deleted successfully' } as ApiResponse<null>);
+  } catch (error) {
+    res.status(500).json({ success: false, error: 'Error deleting lead' } as ApiResponse<null>);
+  }
+};
+
+==================================================
+Contents of C:\Users\eytan\Desktop\hebrewclubweb\server\src\admin\Controllers\adminMessageController.ts:
+==================================================
+import { Request, Response } from 'express';
+import Message from '../../models/Message';
+import { Message as MessageType, ApiResponse } from '../../types/models';
+
+export const getMessageManagementData = async (req: Request, res: Response) => {
+  try {
+    const messages = await Message.find()
+      .populate('sender', 'name email')
+      .populate('recipient', 'name email');
+    res.json({ success: true, data: messages } as ApiResponse<MessageType[]>);
+  } catch (error) {
+    res.status(500).json({ success: false, error: 'Error fetching message data' } as ApiResponse<null>);
+  }
+};
+
+export const sendAdminMessage = async (req: Request, res: Response) => {
+  try {
+    const { recipientId, subject, content } = req.body;
+    const newMessage = new Message({
+      sender: req.user!._id, // Assuming the admin's user ID is available in req.user
+      recipient: recipientId,
+      subject,
+      content,
+      isRead: false
+    });
+    await newMessage.save();
+    res.status(201).json({ success: true, data: newMessage } as ApiResponse<MessageType>);
+  } catch (error) {
+    res.status(500).json({ success: false, error: 'Error sending admin message' } as ApiResponse<null>);
+  }
+};
+
+export const deleteMessage = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const deletedMessage = await Message.findByIdAndDelete(id);
+    if (!deletedMessage) {
+      return res.status(404).json({ success: false, error: 'Message not found' } as ApiResponse<null>);
+    }
+    res.json({ success: true, message: 'Message deleted successfully' } as ApiResponse<null>);
+  } catch (error) {
+    res.status(500).json({ success: false, error: 'Error deleting message' } as ApiResponse<null>);
+  }
+};
+
+==================================================
+Contents of C:\Users\eytan\Desktop\hebrewclubweb\server\src\admin\Controllers\adminPaymentController.ts:
+==================================================
+import { Request, Response } from 'express';
+import Payment from '../../models/Payment';
+import { Payment as PaymentType, ApiResponse } from '../../types/models';
+
+export const getPaymentManagementData = async (req: Request, res: Response) => {
+  try {
+    const payments = await Payment.find()
+      .populate('userId', 'name email')
+      .populate('courseId', 'title');
+    res.json({ success: true, data: payments } as ApiResponse<PaymentType[]>);
+  } catch (error) {
+    res.status(500).json({ success: false, error: 'Error fetching payment data' } as ApiResponse<null>);
+  }
+};
+
+export const processPayment = async (req: Request, res: Response) => {
+  try {
+    const { userId, courseId, amount, currency, paymentMethod } = req.body;
+    const newPayment = new Payment({
+      userId,
+      courseId,
+      amount,
+      currency,
+      status: 'completed',
+      paymentMethod,
+      transactionId: 'TRANS_' + Date.now() // In a real scenario, this would come from a payment gateway
+    });
+    await newPayment.save();
+    res.status(201).json({ success: true, data: newPayment } as ApiResponse<PaymentType>);
+  } catch (error) {
+    res.status(500).json({ success: false, error: 'Error processing payment' } as ApiResponse<null>);
+  }
+};
+
+export const refundPayment = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const payment = await Payment.findById(id);
+    if (!payment) {
+      return res.status(404).json({ success: false, error: 'Payment not found' } as ApiResponse<null>);
+    }
+    payment.status = 'refunded';
+    await payment.save();
+    res.json({ success: true, data: payment } as ApiResponse<PaymentType>);
+  } catch (error) {
+    res.status(500).json({ success: false, error: 'Error refunding payment' } as ApiResponse<null>);
+  }
+};
+
+==================================================
+Contents of C:\Users\eytan\Desktop\hebrewclubweb\server\src\admin\Controllers\adminStatisticsController.ts:
+==================================================
+import { Request, Response } from 'express';
+import User from '../../models/User';
+import Course from '../../models/Course';
+import Payment from '../../models/Payment';
+import Lead from '../../models/Lead';
+import { ApiResponse } from '../../types/models';
+
+export const getDashboardStats = async (req: Request, res: Response) => {
+  try {
+    const userCount = await User.countDocuments();
+    const courseCount = await Course.countDocuments();
+    const totalRevenue = await Payment.aggregate([
+      { $match: { status: 'completed' } },
+      { $group: { _id: null, total: { $sum: "$amount" } } }
+    ]);
+    const recentPayments = await Payment.find({ status: 'completed' })
+      .sort({ createdAt: -1 })
+      .limit(5)
+      .populate('userId', 'name')
+      .populate('courseId', 'title');
+    const newLeadsCount = await Lead.countDocuments({ 
+      createdAt: { $gte: new Date(Date.now() - 30*24*60*60*1000) }
+    });
+    const userGrowth = await User.aggregate([
+      {
+        $group: {
+          _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
+          count: { $sum: 1 }
+        }
+      },
+      { $sort: { _id: 1 } },
+      { $limit: 30 }
+    ]);
+
+    res.json({
+      success: true,
+      data: {
+        userCount,
+        courseCount,
+        totalRevenue: totalRevenue[0]?.total || 0,
+        recentPayments,
+        newLeadsCount,
+        userGrowth
+      }
+    } as ApiResponse<any>);
+  } catch (error) {
+    res.status(500).json({ success: false, error: 'Error fetching dashboard stats' } as ApiResponse<null>);
+  }
+};
+
+export const getUserGrowthStats = async (req: Request, res: Response) => {
+  try {
+    const userGrowth = await User.aggregate([
+      {
+        $group: {
+          _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
+          count: { $sum: 1 }
+        }
+      },
+      { $sort: { _id: 1 } },
+      { $limit: 30 }
+    ]);
+    res.json({ success: true, data: userGrowth } as ApiResponse<any>);
+  } catch (error) {
+    res.status(500).json({ success: false, error: 'Error fetching user growth stats' } as ApiResponse<null>);
+  }
+};
+
+export const getCoursePopularityStats = async (req: Request, res: Response) => {
+  try {
+    const coursePopularity = await Course.aggregate([
+      {
+        $project: {
+          title: 1,
+          userCount: { $size: "$users" }
+        }
+      },
+      { $sort: { userCount: -1 } },
+      { $limit: 10 }
+    ]);
+    res.json({ success: true, data: coursePopularity } as ApiResponse<any>);
+  } catch (error) {
+    res.status(500).json({ success: false, error: 'Error fetching course popularity stats' } as ApiResponse<null>);
+  }
+};
+
+export const getRevenueStats = async (req: Request, res: Response) => {
+  try {
+    const revenueStats = await Payment.aggregate([
+      { $match: { status: 'completed' } },
+      {
+        $group: {
+          _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
+          total: { $sum: "$amount" }
+        }
+      },
+      { $sort: { _id: 1 } },
+      { $limit: 30 }
+    ]);
+    res.json({ success: true, data: revenueStats } as ApiResponse<any>);
+  } catch (error) {
+    res.status(500).json({ success: false, error: 'Error fetching revenue stats' } as ApiResponse<null>);
+  }
+};
+
+==================================================
+Contents of C:\Users\eytan\Desktop\hebrewclubweb\server\src\admin\Controllers\adminSystemSettingsController.ts:
+==================================================
+import { Request, Response } from 'express';
+import SystemSettings from '../models/SystemSettings';
+
+
+export const updateSystemSettings = async (req: Request, res: Response) => {
+  try {
+    const { settingKey, settingValue } = req.body;
+    const updatedSetting = await SystemSettings.findOneAndUpdate(
+      { key: settingKey },
+      { value: settingValue },
+      { new: true, upsert: true }
+    );
+    res.json(updatedSetting);
+  } catch (error) {
+    res.status(500).json({ message: 'Error updating system settings', error });
+  }
+};
+
+export const getSystemSettings = async (req: Request, res: Response) => {
+  try {
+    const settings = await SystemSettings.find();
+    res.json(settings);
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching system settings', error });
+  }
+};
+
+==================================================
+Contents of C:\Users\eytan\Desktop\hebrewclubweb\server\src\admin\Controllers\adminTaskController.ts:
+==================================================
+import { Request, Response } from 'express';
+import Assignment from '../../models/Assignment';
+
+export const getTaskManagementData = async (req: Request, res: Response) => {
+  try {
+    const assignments = await Assignment.find();
+    res.json(assignments);
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching task data', error });
+  }
+};
+
+export const createTask = async (req: Request, res: Response) => {
+  // Implementation for creating a new task
+};
+
+export const updateTask = async (req: Request, res: Response) => {
+  // Implementation for updating a task
+};
+
+export const deleteTask = async (req: Request, res: Response) => {
+  // Implementation for deleting a task
+};
+
+==================================================
+Contents of C:\Users\eytan\Desktop\hebrewclubweb\server\src\admin\Controllers\adminUserController.ts:
+==================================================
+import { Request, Response } from 'express';
+import User from '../../models/User';
+import bcrypt from 'bcryptjs';
+import { User as UserType, UserManagementData, ApiResponse, PaginatedResponse  } from '../../types/models';
+
+export const getUsers = async (req: Request, res: Response) => {
+  try {
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 10;
+    const search = req.query.search as string;
+
+    const query = search
+      ? { $or: [
+          { name: { $regex: search, $options: 'i' } },
+          { email: { $regex: search, $options: 'i' } },
+          { username: { $regex: search, $options: 'i' } }
+        ]}
+      : {};
+
+    const total = await User.countDocuments(query);
+    const users = await User.find(query)
+      .select('-password -twoFactorSecret -resetPasswordToken -resetPasswordExpires -googleId -facebookId -emailVerificationToken -jwtSecret')
+      .skip((page - 1) * limit)
+      .limit(limit)
+      .lean();
+
+    const userArray: UserManagementData[] = users.map(user => ({
+      _id: user._id.toString(),
+      name: user.name,
+      email: user.email,
+      username: user.username,
+      role: user.role,
+      groups: user.groups,
+      courses: user.courses.map(course => course.toString()),
+      twoFactorEnabled: user.twoFactorEnabled,
+      isEmailVerified: user.isEmailVerified,
+      lastLogin: user.lastLogin,
+      status: user.status,
+      failedLoginAttempts: user.failedLoginAttempts,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt
+    }));
+
+    const response: PaginatedResponse<UserManagementData[]> = {
+      success: true,
+      data: userArray,
+      totalCount: total,
+      pageSize: limit,
+      currentPage: page,
+      totalPages: Math.ceil(total / limit)
+    };
+
+    res.json(response);
+  } catch (error) {
+    console.error('Error fetching users:', error);
+    res.status(500).json({ success: false, error: 'Error fetching users' } as ApiResponse<null>);
+  }
+};
+// ... (rest of the file remains unchanged)
+export const createUser = async (req: Request, res: Response) => {
+  try {
+    const { name, email, username, password, role, groups } = req.body;
+    
+    const existingUser = await User.findOne({ $or: [{ email }, { username }] });
+    if (existingUser) {
+      return res.status(400).json({ success: false, error: 'User with this email or username already exists' } as ApiResponse<null>);
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    const newUser = new User({
+      name,
+      email,
+      username,
+      password: hashedPassword,
+      role,
+      groups,
+      lastLogin: new Date(),
+      status: 'active'
+    });
+
+    await newUser.save();
+    
+    res.status(201).json({ 
+      success: true, 
+      data: { 
+        name: newUser.name, 
+        email: newUser.email, 
+        username: newUser.username, 
+        role: newUser.role, 
+        groups: newUser.groups 
+      } 
+    } as ApiResponse<Partial<UserType>>);
+  } catch (error) {
+    console.error('Error creating user:', error);
+    res.status(500).json({ success: false, error: 'Server error while creating new user' } as ApiResponse<null>);
+  }
+};
+
+export const updateUser = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { name, email, username, role, groups } = req.body;
+
+    const user = await User.findById(id);
+    if (!user) {
+      return res.status(404).json({ success: false, error: 'User not found' } as ApiResponse<null>);
+    }
+
+    if (email !== user.email) {
+      const existingUser = await User.findOne({ email });
+      if (existingUser) {
+        return res.status(400).json({ success: false, error: 'Email is already in use' } as ApiResponse<null>);
+      }
+    }
+
+    if (username !== user.username) {
+      const existingUser = await User.findOne({ username });
+      if (existingUser) {
+        return res.status(400).json({ success: false, error: 'Username is already in use' } as ApiResponse<null>);
+      }
+    }
+
+    user.name = name;
+    user.email = email;
+    user.username = username;
+    user.role = role;
+    user.groups = groups;
+
+    await user.save();
+
+    res.json({ 
+      success: true, 
+      data: { 
+        name: user.name, 
+        email: user.email, 
+        username: user.username, 
+        role: user.role, 
+        groups: user.groups 
+      } 
+    } as ApiResponse<Partial<UserType>>);
+  } catch (error) {
+    console.error('Error updating user:', error);
+    res.status(500).json({ success: false, error: 'Server error while updating user' } as ApiResponse<null>);
+  }
+};
+
+export const deleteUser = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+
+    const user = await User.findByIdAndDelete(id);
+
+    if (!user) {
+      return res.status(404).json({ success: false, error: 'User not found' } as ApiResponse<null>);
+    }
+
+    res.json({ success: true, message: 'User deleted successfully' } as ApiResponse<null>);
+  } catch (error) {
+    console.error('Error deleting user:', error);
+    res.status(500).json({ success: false, error: 'Server error while deleting user' } as ApiResponse<null>);
+  }
+};
+
+export const setUserRole = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { userId, role } = req.body;
+
+    if (!['user', 'admin'].includes(role)) {
+      res.status(400).json({ success: false, error: 'Invalid role' } as ApiResponse<null>);
+      return;
+    }
+
+    const user = await User.findByIdAndUpdate(userId, { role }, { new: true });
+
+    if (!user) {
+      res.status(404).json({ success: false, error: 'User not found' } as ApiResponse<null>);
+      return;
+    }
+
+    res.json({ 
+      success: true, 
+      data: user 
+    } as ApiResponse<UserType>);
+  } catch (err) {
+    console.error('Error updating user role:', err);
+    res.status(500).json({ success: false, error: 'Server error' } as ApiResponse<null>);
+  }
+};
+
+export const toggleUserStatus = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { userId } = req.params;
+    const user = await User.findById(userId);
+
+    if (!user) {
+      res.status(404).json({ success: false, error: 'User not found' } as ApiResponse<null>);
+      return;
+    }
+
+    user.status = user.status === 'active' ? 'locked' : 'active';
+    await user.save();
+
+    res.json({ 
+      success: true, 
+      data: user 
+    } as ApiResponse<UserType>);
+  } catch (err) {
+    console.error('Error toggling user status:', err);
+    res.status(500).json({ success: false, error: 'Server error' } as ApiResponse<null>);
+  }
+};
+
+export const addUserToGroup = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { userId, groupName } = req.body;
+    const user = await User.findById(userId);
+
+    if (!user) {
+      res.status(404).json({ success: false, error: 'User not found' } as ApiResponse<null>);
+      return;
+    }
+
+    if (!user.groups.includes(groupName)) {
+      user.groups.push(groupName);
+      await user.save();
+    }
+
+    res.json({ 
+      success: true, 
+      data: user 
+    } as ApiResponse<UserType>);
+  } catch (err) {
+    console.error('Error adding user to group:', err);
+    res.status(500).json({ success: false, error: 'Server error' } as ApiResponse<null>);
+  }
+};
+
+export const removeUserFromGroup = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { userId, groupName } = req.body;
+    const user = await User.findById(userId);
+
+    if (!user) {
+      res.status(404).json({ success: false, error: 'User not found' } as ApiResponse<null>);
+      return;
+    }
+
+    user.groups = user.groups.filter(group => group !== groupName);
+    await user.save();
+
+    res.json({ 
+      success: true, 
+      data: user 
+    } as ApiResponse<UserType>);
+  } catch (err) {
+    console.error('Error removing user from group:', err);
+    res.status(500).json({ success: false, error: 'Server error' } as ApiResponse<null>);
+  }
+};
+
+==================================================
+Contents of C:\Users\eytan\Desktop\hebrewclubweb\server\src\admin\models\Course.ts:
+==================================================
+import mongoose, { Schema, Document } from 'mongoose';
+import { Course as ICourse } from '../types/models';
+
+const CourseSchema: Schema = new Schema({
+  title: { 
+    type: String, 
+    required: true 
+  },
+  description: { 
+    type: String, 
+    required: true 
+  },
+  instructor: { 
+    type: Schema.Types.ObjectId, 
+    ref: 'User', 
+    required: true 
+  },
+  duration: { 
+    type: Number, 
+    required: true 
+  },
+  level: { 
+    type: String, 
+    enum: ['beginner', 'intermediate', 'advanced'], 
+    required: true 
+  },
+  price: { 
+    type: Number, 
+    required: true 
+  },
+  tags: [{ 
+    type: String 
+  }],
+  users: [{ 
+    type: Schema.Types.ObjectId, 
+    ref: 'User' 
+  }],
+  completionRate: { 
+    type: Number, 
+    default: 0 
+  },
+  rating: { 
+    type: Number, 
+    default: 0 
+  },
+  icon: { 
+    type: String 
+  },
+  features: [{ 
+    type: String 
+  }],
+  options: [{ 
+    type: String 
+  }],
+  recommended: { 
+    type: Boolean, 
+    default: false 
+  }
+}, { 
+  timestamps: true 
+});
+
+// Add any methods or pre/post hooks here if needed
+// For example:
+CourseSchema.methods.isUserEnrolled = function(userId: mongoose.Types.ObjectId): boolean {
+  return this.users.includes(userId);
+};
+
+const Course = mongoose.model<ICourse>('Course', CourseSchema);
+
+export default Course;
+
+==================================================
+Contents of C:\Users\eytan\Desktop\hebrewclubweb\server\src\admin\models\SystemSettings.ts:
+==================================================
+// src/admin/models/SystemSettings.ts
+
+import mongoose, { Schema, Document } from 'mongoose';
+
+export interface ISystemSettings extends Document {
+  siteName: string;
+  siteDescription: string;
+  contactEmail: string;
+  maxUploadSize: number;
+  allowRegistration: boolean;
+  maintenanceMode: boolean;
+}
+
+const SystemSettingsSchema: Schema = new Schema({
+  siteName: { 
+    type: String, 
+    required: true 
+  },
+  siteDescription: { 
+    type: String, 
+    required: true 
+  },
+  contactEmail: { 
+    type: String, 
+    required: true 
+  },
+  maxUploadSize: { 
+    type: Number, 
+    required: true 
+  },
+  allowRegistration: { 
+    type: Boolean, 
+    required: true 
+  },
+  maintenanceMode: { 
+    type: Boolean, 
+    required: true 
+  }
+});
+
+const SystemSettings = mongoose.model<ISystemSettings>('SystemSettings', SystemSettingsSchema);
+
+export default SystemSettings;
+
+==================================================
+Contents of C:\Users\eytan\Desktop\hebrewclubweb\server\src\admin\routes\adminDashboardRoutes.ts:
+==================================================
+import express from 'express';
+import { getDashboardStats } from '../Controllers/adminDashboardController';
+import { authenticateToken, adminCheck } from '../../middleware/authMiddleware';
+import { validateCsrfToken } from '../../middleware/csrfProtection';
+
+const router = express.Router();
+
+router.get('/stats', authenticateToken, adminCheck, validateCsrfToken, getDashboardStats);
+
+export default router;
+
+==================================================
+Contents of C:\Users\eytan\Desktop\hebrewclubweb\server\src\admin\routes\adminRoutes.ts:
+==================================================
+import express from 'express';
+import { body } from 'express-validator';
+import { getUsers, createUser, updateUser, deleteUser } from '../Controllers/adminUserController';
+import { authenticateToken, adminCheck } from '../../middleware/authMiddleware';
+import { validateRequest } from '../../middleware/validateRequest';
+import { validateCsrfToken } from '../../middleware/csrfProtection';
+
+const router = express.Router();
+
+router.get('/users', authenticateToken, adminCheck, getUsers);
+
+router.post('/users', [
+  authenticateToken,
+  adminCheck,
+  body('name').notEmpty().withMessage('Name is required'),
+  body('email').isEmail().withMessage('Valid email is required'),
+  body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters long'),
+  validateRequest,
+  validateCsrfToken
+], createUser);
+
+router.put('/users/:id', [
+  authenticateToken,
+  adminCheck,
+  body('name').optional().notEmpty().withMessage('Name cannot be empty'),
+  body('email').optional().isEmail().withMessage('Valid email is required'),
+  validateRequest,
+  validateCsrfToken
+], updateUser);
+
+router.delete('/users/:id', authenticateToken, adminCheck, validateCsrfToken, deleteUser);
+
+export default router;
+
+==================================================
+Contents of C:\Users\eytan\Desktop\hebrewclubweb\server\src\admin\routes\adminStatisticsRoutes.ts:
+==================================================
+import express from 'express';
+import { authenticateToken, roleCheck } from '../../middleware/authMiddleware';
+import * as adminStatisticsController from '../../admin/Controller/adminStatisticsController';
+
+const router = express.Router();
+
+router.use(authenticateToken, roleCheck(['admin']));
+
+router.get('/dashboard', adminStatisticsController.getDashboardStats);
+router.get('/user-growth', adminStatisticsController.getUserGrowthStats);
+router.get('/course-popularity', adminStatisticsController.getCoursePopularityStats);
+router.get('/revenue', adminStatisticsController.getRevenueStats);
+
+export default router;
+
+==================================================
+Contents of C:\Users\eytan\Desktop\hebrewclubweb\server\src\admin\routes\adminSystemSettingsRoutes.ts:
+==================================================
+import express from 'express';
+import { authenticateToken, roleCheck } from '../../middleware/authMiddleware';
+import * as adminSystemSettingsController from '../../admin/Controller/adminSystemSettingsController';
+
+const router = express.Router();
+
+router.use(authenticateToken, roleCheck(['admin']));
+
+router.put('/', adminSystemSettingsController.updateSystemSettings);
+router.get('/', adminSystemSettingsController.getSystemSettings);
+
+export default router;

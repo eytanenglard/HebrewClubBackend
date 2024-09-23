@@ -1,0 +1,4230 @@
+מבנה התיקייה:
+src
+  admin
+    Controller
+      adminCourseController.ts
+      adminGradeController.ts
+      adminLeadController.ts
+      adminMessageController.ts
+      adminPaymentController.ts
+      adminStatisticsController.ts
+      adminSystemSettingsController.ts
+      adminTaskController.ts
+      adminUserController.ts
+    models
+      SystemSettings.ts
+    routes
+      adminRoutes.ts
+      adminStatisticsRoutes.ts
+      adminSystemSettingsRoutes.ts
+  app.ts
+  config
+    corsConfig.ts
+    csrfConfig.ts
+  controllers
+    assignmentController.ts
+    courseController.ts
+    gradeController.ts
+    leadController.ts
+    messageController.ts
+    paymentController.ts
+    personalAreaController.ts
+    systemSettingsController.ts
+    userController.ts
+  directory_analysis.txt
+  middleware
+    authMiddleware.ts
+    csrfProtection.ts
+    errorHandler.ts
+    logger.ts
+  models
+    Assignment.ts
+    Course.ts
+    Grade.ts
+    Lead.ts
+    Message.ts
+    Payment.ts
+    User.ts
+    UserActionLog.ts
+  package-lock.json
+  package.json
+  routes
+    .dist
+    assignmentRoutes.ts
+    authRoutes.ts
+    courseRoutes.ts
+    gradeRoutes.ts
+    leadRoutes.ts
+    messageRoutes.ts
+    paymentRoutes.ts
+    personalAreaRoutes.ts
+  types
+    types.ts
+  utils
+    emailService.ts
+  validations.ts
+
+תוכן הקבצים:
+
+==================================================
+Contents of C:\Users\eytan\Desktop\hebrewclubweb\server\src\app.ts:
+==================================================
+import 'express-async-errors';
+import express from 'express';
+import mongoose from 'mongoose';
+import dotenv from 'dotenv';
+import cors from 'cors';
+import cookieParser from 'cookie-parser';
+import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
+import csurf from 'csurf';
+
+// Routes
+import leadRoutes from './routes/leadRoutes';
+import authRoutes from './routes/authRoutes';
+import courseRoutes from './routes/courseRoutes';
+import assignmentRoutes from './routes/assignmentRoutes';
+import gradeRoutes from './routes/gradeRoutes';
+import messageRoutes from './routes/messageRoutes';
+import paymentRoutes from './routes/paymentRoutes';
+import personalAreaRoutes from './routes/personalAreaRoutes';
+import adminRoutes from './admin/routes/adminRoutes';
+import adminStatisticsRoutes from './admin/routes/adminStatisticsRoutes';
+import adminSystemSettingsRoutes from './admin/routes/adminSystemSettingsRoutes';
+
+// Middleware
+import { errorHandler } from './middleware/errorHandler';
+import { logger } from './middleware/logger';
+import { authenticateToken, roleCheck } from './middleware/authMiddleware';
+
+// Config
+import corsOptions from './config/corsConfig';
+
+dotenv.config();
+
+const app = express();
+
+app.use(cors(corsOptions));
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
+app.use(helmet());
+app.use(logger);
+
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100
+});
+app.use(limiter);
+
+const csrfProtection = csurf({ cookie: true });
+
+app.get('/auth/csrf-token', csrfProtection, (req, res) => {
+  res.json({ csrfToken: req.csrfToken() });
+});
+
+// Routes
+app.use('/auth', authRoutes);
+app.use('/api/leads', leadRoutes);
+app.use('/api/courses', authenticateToken, courseRoutes);
+app.use('/api/assignments', authenticateToken, assignmentRoutes);
+app.use('/api/grades', authenticateToken, gradeRoutes);
+app.use('/api/messages', authenticateToken, messageRoutes);
+app.use('/api/payments', authenticateToken, paymentRoutes);
+app.use('/api/personal-area', authenticateToken, personalAreaRoutes);
+
+// Admin routes
+app.use('/api/admin', authenticateToken, roleCheck(['admin']), adminRoutes);
+app.use('/api/admin/statistics', authenticateToken, roleCheck(['admin']), adminStatisticsRoutes);
+app.use('/api/admin/system-settings', authenticateToken, roleCheck(['admin']), adminSystemSettingsRoutes);
+
+mongoose.connect(process.env.MONGODB_URI as string)
+  .then(() => console.log('מחובר ל-MongoDB'))
+  .catch((err) => console.error('שגיאת התחברות ל-MongoDB:', err));
+
+app.use(errorHandler);
+
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => {
+  console.log(`השרת פועל בפורט ${PORT}`);
+});
+
+export default app;
+
+==================================================
+Contents of C:\Users\eytan\Desktop\hebrewclubweb\server\src\directory_analysis.txt:
+==================================================
+מבנה התיקייה:
+src
+  admin
+    Controller
+      adminCourseController.ts
+      adminGradeController.ts
+      adminLeadController.ts
+      adminMessageController.ts
+      adminPaymentController.ts
+      adminStatisticsController.ts
+      adminSystemSettingsController.ts
+      adminTaskController.ts
+      adminUserController.ts
+    models
+      SystemSettings.ts
+    routes
+      adminRoutes.ts
+      adminStatisticsRoutes.ts
+      adminSystemSettingsRoutes.ts
+  app.ts
+  config
+    corsConfig.ts
+    csrfConfig.ts
+  controllers
+    assignmentController.ts
+    courseController.ts
+    gradeController.ts
+    leadController.ts
+    messageController.ts
+    paymentController.ts
+    personalAreaController.ts
+    systemSettingsController.ts
+    userController.ts
+  middleware
+    authMiddleware.ts
+    csrfProtection.ts
+    errorHandler.ts
+    logger.ts
+  models
+    Assignment.ts
+    Course.ts
+    Grade.ts
+    Lead.ts
+    Message.ts
+    Payment.ts
+    User.ts
+    UserActionLog.ts
+  package-lock.json
+  package.json
+  routes
+    .dist
+    assignmentRoutes.ts
+    authRoutes.ts
+    courseRoutes.ts
+    gradeRoutes.ts
+    leadRoutes.ts
+    messageRoutes.ts
+    paymentRoutes.ts
+    personalAreaRoutes.ts
+  types
+    types.ts
+  utils
+    emailService.ts
+  validations.ts
+
+תוכן הקבצים:
+
+==================================================
+Contents of C:\Users\eytan\Desktop\hebrewclubweb\server\src\app.ts:
+==================================================
+import 'express-async-errors';
+import express from 'express';
+import mongoose from 'mongoose';
+import dotenv from 'dotenv';
+import cors from 'cors';
+import cookieParser from 'cookie-parser';
+import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
+import csurf from 'csurf';
+
+// Routes
+import leadRoutes from './routes/leadRoutes';
+import authRoutes from './routes/authRoutes';
+import courseRoutes from './routes/courseRoutes';
+import assignmentRoutes from './routes/assignmentRoutes';
+import gradeRoutes from './routes/gradeRoutes';
+import messageRoutes from './routes/messageRoutes';
+import paymentRoutes from './routes/paymentRoutes';
+import personalAreaRoutes from './routes/personalAreaRoutes';
+import adminRoutes from './admin/routes/adminRoutes';
+import adminStatisticsRoutes from './admin/routes/adminStatisticsRoutes';
+import adminSystemSettingsRoutes from './admin/routes/adminSystemSettingsRoutes';
+
+// Middleware
+import { errorHandler } from './middleware/errorHandler';
+import { logger } from './middleware/logger';
+import { authenticateToken, roleCheck } from './middleware/authMiddleware';
+
+// Config
+import corsOptions from './config/corsConfig';
+
+dotenv.config();
+
+const app = express();
+
+app.use(cors(corsOptions));
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
+app.use(helmet());
+app.use(logger);
+
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100
+});
+app.use(limiter);
+
+const csrfProtection = csurf({ cookie: true });
+
+app.get('/auth/csrf-token', csrfProtection, (req, res) => {
+  res.json({ csrfToken: req.csrfToken() });
+});
+
+// Routes
+app.use('/auth', authRoutes);
+app.use('/api/leads', leadRoutes);
+app.use('/api/courses', authenticateToken, courseRoutes);
+app.use('/api/assignments', authenticateToken, assignmentRoutes);
+app.use('/api/grades', authenticateToken, gradeRoutes);
+app.use('/api/messages', authenticateToken, messageRoutes);
+app.use('/api/payments', authenticateToken, paymentRoutes);
+app.use('/api/personal-area', authenticateToken, personalAreaRoutes);
+
+// Admin routes
+app.use('/api/admin', authenticateToken, roleCheck(['admin']), adminRoutes);
+app.use('/api/admin/statistics', authenticateToken, roleCheck(['admin']), adminStatisticsRoutes);
+app.use('/api/admin/system-settings', authenticateToken, roleCheck(['admin']), adminSystemSettingsRoutes);
+
+mongoose.connect(process.env.MONGODB_URI as string)
+  .then(() => console.log('מחובר ל-MongoDB'))
+  .catch((err) => console.error('שגיאת התחברות ל-MongoDB:', err));
+
+app.use(errorHandler);
+
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => {
+  console.log(`השרת פועל בפורט ${PORT}`);
+});
+
+export default app;
+
+==================================================
+Contents of C:\Users\eytan\Desktop\hebrewclubweb\server\src\package-lock.json:
+==================================================
+{
+  "name": "src",
+  "lockfileVersion": 3,
+  "requires": true,
+  "packages": {
+    "": {
+      "dependencies": {
+        "express-validator": "^7.1.0"
+      },
+      "devDependencies": {
+        "@types/express-validator": "^2.20.33"
+      }
+    },
+    "node_modules/@types/body-parser": {
+      "version": "1.19.5",
+      "resolved": "https://registry.npmjs.org/@types/body-parser/-/body-parser-1.19.5.tgz",
+      "integrity": "sha512-fB3Zu92ucau0iQ0JMCFQE7b/dv8Ot07NI3KaZIkIUNXq82k4eBAqUaneXfleGY9JWskeS9y+u0nXMyspcuQrCg==",
+      "dev": true,
+      "license": "MIT",
+      "dependencies": {
+        "@types/connect": "*",
+        "@types/node": "*"
+      }
+    },
+    "node_modules/@types/connect": {
+      "version": "3.4.38",
+      "resolved": "https://registry.npmjs.org/@types/connect/-/connect-3.4.38.tgz",
+      "integrity": "sha512-K6uROf1LD88uDQqJCktA4yzL1YYAK6NgfsI0v/mTgyPKWsX1CnJ0XPSDhViejru1GcRkLWb8RlzFYJRqGUbaug==",
+      "dev": true,
+      "license": "MIT",
+      "dependencies": {
+        "@types/node": "*"
+      }
+    },
+    "node_modules/@types/express": {
+      "version": "4.17.21",
+      "resolved": "https://registry.npmjs.org/@types/express/-/express-4.17.21.tgz",
+      "integrity": "sha512-ejlPM315qwLpaQlQDTjPdsUFSc6ZsP4AN6AlWnogPjQ7CVi7PYF3YVz+CY3jE2pwYf7E/7HlDAN0rV2GxTG0HQ==",
+      "dev": true,
+      "license": "MIT",
+      "dependencies": {
+        "@types/body-parser": "*",
+        "@types/express-serve-static-core": "^4.17.33",
+        "@types/qs": "*",
+        "@types/serve-static": "*"
+      }
+    },
+    "node_modules/@types/express-serve-static-core": {
+      "version": "4.19.5",
+      "resolved": "https://registry.npmjs.org/@types/express-serve-static-core/-/express-serve-static-core-4.19.5.tgz",
+      "integrity": "sha512-y6W03tvrACO72aijJ5uF02FRq5cgDR9lUxddQ8vyF+GvmjJQqbzDcJngEjURc+ZsG31VI3hODNZJ2URj86pzmg==",
+      "dev": true,
+      "license": "MIT",
+      "dependencies": {
+        "@types/node": "*",
+        "@types/qs": "*",
+        "@types/range-parser": "*",
+        "@types/send": "*"
+      }
+    },
+    "node_modules/@types/express-validator": {
+      "version": "2.20.33",
+      "resolved": "https://registry.npmjs.org/@types/express-validator/-/express-validator-2.20.33.tgz",
+      "integrity": "sha512-dAlxnuNhKkM/Xq2148NySrnutOSeK8Xk6rpDdDrNT5akAKqFbtLmMKENaMYYh4xWcSqtSWc5l+TLxnZosa9p/g==",
+      "dev": true,
+      "license": "MIT",
+      "dependencies": {
+        "@types/express": "*"
+      }
+    },
+    "node_modules/@types/http-errors": {
+      "version": "2.0.4",
+      "resolved": "https://registry.npmjs.org/@types/http-errors/-/http-errors-2.0.4.tgz",
+      "integrity": "sha512-D0CFMMtydbJAegzOyHjtiKPLlvnm3iTZyZRSZoLq2mRhDdmLfIWOCYPfQJ4cu2erKghU++QvjcUjp/5h7hESpA==",
+      "dev": true,
+      "license": "MIT"
+    },
+    "node_modules/@types/mime": {
+      "version": "1.3.5",
+      "resolved": "https://registry.npmjs.org/@types/mime/-/mime-1.3.5.tgz",
+      "integrity": "sha512-/pyBZWSLD2n0dcHE3hq8s8ZvcETHtEuF+3E7XVt0Ig2nvsVQXdghHVcEkIWjy9A0wKfTn97a/PSDYohKIlnP/w==",
+      "dev": true,
+      "license": "MIT"
+    },
+    "node_modules/@types/node": {
+      "version": "22.0.2",
+      "resolved": "https://registry.npmjs.org/@types/node/-/node-22.0.2.tgz",
+      "integrity": "sha512-yPL6DyFwY5PiMVEwymNeqUTKsDczQBJ/5T7W/46RwLU/VH+AA8aT5TZkvBviLKLbbm0hlfftEkGrNzfRk/fofQ==",
+      "dev": true,
+      "license": "MIT",
+      "dependencies": {
+        "undici-types": "~6.11.1"
+      }
+    },
+    "node_modules/@types/qs": {
+      "version": "6.9.15",
+      "resolved": "https://registry.npmjs.org/@types/qs/-/qs-6.9.15.tgz",
+      "integrity": "sha512-uXHQKES6DQKKCLh441Xv/dwxOq1TVS3JPUMlEqoEglvlhR6Mxnlew/Xq/LRVHpLyk7iK3zODe1qYHIMltO7XGg==",
+      "dev": true,
+      "license": "MIT"
+    },
+    "node_modules/@types/range-parser": {
+      "version": "1.2.7",
+      "resolved": "https://registry.npmjs.org/@types/range-parser/-/range-parser-1.2.7.tgz",
+      "integrity": "sha512-hKormJbkJqzQGhziax5PItDUTMAM9uE2XXQmM37dyd4hVM+5aVl7oVxMVUiVQn2oCQFN/LKCZdvSM0pFRqbSmQ==",
+      "dev": true,
+      "license": "MIT"
+    },
+    "node_modules/@types/send": {
+      "version": "0.17.4",
+      "resolved": "https://registry.npmjs.org/@types/send/-/send-0.17.4.tgz",
+      "integrity": "sha512-x2EM6TJOybec7c52BX0ZspPodMsQUd5L6PRwOunVyVUhXiBSKf3AezDL8Dgvgt5o0UfKNfuA0eMLr2wLT4AiBA==",
+      "dev": true,
+      "license": "MIT",
+      "dependencies": {
+        "@types/mime": "^1",
+        "@types/node": "*"
+      }
+    },
+    "node_modules/@types/serve-static": {
+      "version": "1.15.7",
+      "resolved": "https://registry.npmjs.org/@types/serve-static/-/serve-static-1.15.7.tgz",
+      "integrity": "sha512-W8Ym+h8nhuRwaKPaDw34QUkwsGi6Rc4yYqvKFo5rm2FUEhCFbzVWrxXUxuKK8TASjWsysJY0nsmNCGhCOIsrOw==",
+      "dev": true,
+      "license": "MIT",
+      "dependencies": {
+        "@types/http-errors": "*",
+        "@types/node": "*",
+        "@types/send": "*"
+      }
+    },
+    "node_modules/express-validator": {
+      "version": "7.1.0",
+      "resolved": "https://registry.npmjs.org/express-validator/-/express-validator-7.1.0.tgz",
+      "integrity": "sha512-ePn6NXjHRZiZkwTiU1Rl2hy6aUqmi6Cb4/s8sfUsKH7j2yYl9azSpl8xEHcOj1grzzQ+UBEoLWtE1s6FDxW++g==",
+      "license": "MIT",
+      "dependencies": {
+        "lodash": "^4.17.21",
+        "validator": "~13.12.0"
+      },
+      "engines": {
+        "node": ">= 8.0.0"
+      }
+    },
+    "node_modules/lodash": {
+      "version": "4.17.21",
+      "resolved": "https://registry.npmjs.org/lodash/-/lodash-4.17.21.tgz",
+      "integrity": "sha512-v2kDEe57lecTulaDIuNTPy3Ry4gLGJ6Z1O3vE1krgXZNrsQ+LFTGHVxVjcXPs17LhbZVGedAJv8XZ1tvj5FvSg==",
+      "license": "MIT"
+    },
+    "node_modules/undici-types": {
+      "version": "6.11.1",
+      "resolved": "https://registry.npmjs.org/undici-types/-/undici-types-6.11.1.tgz",
+      "integrity": "sha512-mIDEX2ek50x0OlRgxryxsenE5XaQD4on5U2inY7RApK3SOJpofyw7uW2AyfMKkhAxXIceo2DeWGVGwyvng1GNQ==",
+      "dev": true,
+      "license": "MIT"
+    },
+    "node_modules/validator": {
+      "version": "13.12.0",
+      "resolved": "https://registry.npmjs.org/validator/-/validator-13.12.0.tgz",
+      "integrity": "sha512-c1Q0mCiPlgdTVVVIJIrBuxNicYE+t/7oKeI9MWLj3fh/uq2Pxh/3eeWbVZ4OcGW1TUf53At0njHw5SMdA3tmMg==",
+      "license": "MIT",
+      "engines": {
+        "node": ">= 0.10"
+      }
+    }
+  }
+}
+
+
+==================================================
+Contents of C:\Users\eytan\Desktop\hebrewclubweb\server\src\package.json:
+==================================================
+{
+  "dependencies": {
+    "express-validator": "^7.1.0"
+  },
+  "devDependencies": {
+    "@types/express-validator": "^2.20.33"
+  }
+}
+
+
+==================================================
+Contents of C:\Users\eytan\Desktop\hebrewclubweb\server\src\validations.ts:
+==================================================
+// src/validations.ts
+
+import { body, ValidationChain } from 'express-validator';
+
+export const validateLogin: ValidationChain[] = [
+  body('username')
+    .notEmpty()
+    .withMessage('שם משתמש או אימייל נדרש')
+    .isLength({ max: 100 })
+    .withMessage('שם משתמש או אימייל חייב להיות עד 100 תווים'),
+  body('password')
+    .notEmpty()
+    .withMessage('סיסמה נדרשת')
+    .isLength({ min: 8, max: 100 })
+    .withMessage('הסיסמה חייבת להיות בין 8 ל-100 תווים')
+    .trim(),
+];
+
+export const validateRegistration: ValidationChain[] = [
+  body('name')
+    .notEmpty().withMessage('שם נדרש')
+    .isLength({ min: 2, max: 50 }).withMessage('השם חייב להיות בין 2 ל-50 תווים')
+    .trim().escape(),
+  body('username')
+    .notEmpty().withMessage('שם משתמש נדרש')
+    .isLength({ min: 3, max: 20 }).withMessage('שם המשתמש חייב להיות בין 3 ל-20 תווים')
+    .matches(/^[a-zA-Z0-9_]+$/).withMessage('שם המשתמש יכול להכיל רק אותיות, מספרים וקו תחתון')
+    .trim(),
+  body('email')
+    .isEmail().withMessage('כתובת אימייל לא תקינה')
+    .normalizeEmail()
+    .isLength({ max: 100 }).withMessage('כתובת האימייל חייבת להיות עד 100 תווים'),
+  body('password')
+    .isLength({ min: 8, max: 100 }).withMessage('הסיסמה חייבת להיות בין 8 ל-100 תווים')
+    .matches(/^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[^a-zA-Z0-9]).{8,}$/, "i")
+    .withMessage('הסיסמה חייבת לכלול אות קטנה, אות גדולה, מספר ותו מיוחד')
+    .trim(),
+];
+
+export const validateForgotPassword: ValidationChain[] = [
+  body('email')
+    .isEmail()
+    .withMessage('כתובת אימייל לא תקינה')
+    .normalizeEmail()
+    .isLength({ max: 100 })
+    .withMessage('כתובת האימייל חייבת להיות עד 100 תווים'),
+];
+
+export const validateResetPassword: ValidationChain[] = [
+  body('password')
+    .isLength({ min: 8, max: 100 })
+    .withMessage('הסיסמה חייבת להיות בין 8 ל-100 תווים')
+    .matches(/^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[^a-zA-Z0-9]).{8,}$/, "i")
+    .withMessage('הסיסמה חייבת לכלול אות קטנה, אות גדולה, מספר ותו מיוחד')
+    .trim(),
+];
+
+export const validateChangePassword: ValidationChain[] = [
+  body('currentPassword')
+    .notEmpty()
+    .withMessage('הסיסמה הנוכחית נדרשת')
+    .trim(),
+  body('newPassword')
+    .isLength({ min: 8, max: 100 })
+    .withMessage('הסיסמה החדשה חייבת להיות בין 8 ל-100 תווים')
+    .matches(/^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[^a-zA-Z0-9]).{8,}$/, "i")
+    .withMessage('הסיסמה החדשה חייבת לכלול אות קטנה, אות גדולה, מספר ותו מיוחד')
+    .trim(),
+];
+
+export const validateUpdateProfile: ValidationChain[] = [
+  body('name')
+    .optional()
+    .isLength({ max: 50 })
+    .withMessage('השם חייב להיות עד 50 תווים')
+    .trim()
+    .escape(),
+  body('email')
+    .optional()
+    .isEmail()
+    .withMessage('כתובת אימייל לא תקינה')
+    .normalizeEmail()
+    .isLength({ max: 100 })
+    .withMessage('כתובת האימייל חייבת להיות עד 100 תווים'),
+];
+
+export const validateTwoFactorSetup: ValidationChain[] = [
+  body('secret')
+    .notEmpty()
+    .withMessage('סוד האימות הדו-שלבי נדרש'),
+  body('token')
+    .notEmpty()
+    .withMessage('קוד האימות נדרש')
+    .isLength({ min: 6, max: 6 })
+    .withMessage('קוד האימות חייב להיות באורך 6 ספרות'),
+];
+
+export const validateTwoFactorVerify: ValidationChain[] = [
+  body('userId')
+    .notEmpty()
+    .withMessage('מזהה המשתמש נדרש'),
+  body('token')
+    .notEmpty()
+    .withMessage('קוד האימות נדרש')
+    .isLength({ min: 6, max: 6 })
+    .withMessage('קוד האימות חייב להיות באורך 6 ספרות'),
+];
+
+export const validateGoogleAuth: ValidationChain[] = [
+  body('token')
+    .notEmpty()
+    .withMessage('טוקן Google נדרש'),
+];
+
+==================================================
+Contents of C:\Users\eytan\Desktop\hebrewclubweb\server\src\admin\Controller\adminCourseController.ts:
+==================================================
+import { Request, Response } from 'express';
+import Course from '../models/Course';
+
+export const getCourseManagementData = async (req: Request, res: Response) => {
+  try {
+    const courses = await Course.find();
+    res.json(courses);
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching course data', error });
+  }
+};
+
+export const createCourse = async (req: Request, res: Response) => {
+  // Implementation for creating a new course
+};
+
+export const updateCourse = async (req: Request, res: Response) => {
+  // Implementation for updating a course
+};
+
+export const deleteCourse = async (req: Request, res: Response) => {
+  // Implementation for deleting a course
+};
+
+==================================================
+Contents of C:\Users\eytan\Desktop\hebrewclubweb\server\src\admin\Controller\adminGradeController.ts:
+==================================================
+import { Request, Response } from 'express';
+import Grade from '../models/Grade';
+
+export const getGradeManagementData = async (req: Request, res: Response) => {
+  try {
+    const grades = await Grade.find();
+    res.json(grades);
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching grade data', error });
+  }
+};
+
+export const createGrade = async (req: Request, res: Response) => {
+  // Implementation for creating a new grade
+};
+
+export const updateGrade = async (req: Request, res: Response) => {
+  // Implementation for updating a grade
+};
+
+export const deleteGrade = async (req: Request, res: Response) => {
+  // Implementation for deleting a grade
+};
+
+==================================================
+Contents of C:\Users\eytan\Desktop\hebrewclubweb\server\src\admin\Controller\adminLeadController.ts:
+==================================================
+import { Request, Response } from 'express';
+import Lead from '../models/Lead';
+
+export const getLeadManagementData = async (req: Request, res: Response) => {
+  try {
+    const leads = await Lead.find();
+    res.json(leads);
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching lead data', error });
+  }
+};
+
+export const createLead = async (req: Request, res: Response) => {
+  // Implementation for creating a new lead
+};
+
+export const updateLead = async (req: Request, res: Response) => {
+  // Implementation for updating a lead
+};
+
+export const deleteLead = async (req: Request, res: Response) => {
+  // Implementation for deleting a lead
+};
+
+==================================================
+Contents of C:\Users\eytan\Desktop\hebrewclubweb\server\src\admin\Controller\adminMessageController.ts:
+==================================================
+import { Request, Response } from 'express';
+import Message from '../models/Message';
+
+export const getMessageManagementData = async (req: Request, res: Response) => {
+  try {
+    const messages = await Message.find();
+    res.json(messages);
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching message data', error });
+  }
+};
+
+export const sendAdminMessage = async (req: Request, res: Response) => {
+  // Implementation for sending an admin message
+};
+
+export const deleteMessage = async (req: Request, res: Response) => {
+  // Implementation for deleting a message
+};
+
+==================================================
+Contents of C:\Users\eytan\Desktop\hebrewclubweb\server\src\admin\Controller\adminPaymentController.ts:
+==================================================
+import { Request, Response } from 'express';
+import Payment from '../models/Payment';
+
+export const getPaymentManagementData = async (req: Request, res: Response) => {
+  try {
+    const payments = await Payment.find();
+    res.json(payments);
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching payment data', error });
+  }
+};
+
+export const processPayment = async (req: Request, res: Response) => {
+  // Implementation for processing a payment
+};
+
+export const refundPayment = async (req: Request, res: Response) => {
+  // Implementation for refunding a payment
+};
+
+==================================================
+Contents of C:\Users\eytan\Desktop\hebrewclubweb\server\src\admin\Controller\adminStatisticsController.ts:
+==================================================
+import { Request, Response } from 'express';
+import User from '../../models/User';
+import Course from '../../models/Course';
+import Payment from '../../models/Payment';
+import Lead from '../../models/Lead';
+
+export const getDashboardStats = async (req: Request, res: Response) => {
+  try {
+    const userCount = await User.countDocuments();
+    const courseCount = await Course.countDocuments({ status: 'active' });
+    const recentPayments = await Payment.find().sort({ createdAt: -1 }).limit(5);
+    const newLeadsCount = await Lead.countDocuments({ createdAt: { $gte: new Date(Date.now() - 30*24*60*60*1000) } });
+
+    res.json({
+      userCount,
+      courseCount,
+      recentPayments,
+      newLeadsCount
+    });
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching dashboard stats', error });
+  }
+};
+
+export const getUserGrowthStats = async (req: Request, res: Response) => {
+  // Implementation for user growth statistics
+};
+
+export const getCoursePopularityStats = async (req: Request, res: Response) => {
+  // Implementation for course popularity statistics
+};
+
+export const getRevenueStats = async (req: Request, res: Response) => {
+  // Implementation for revenue statistics
+};
+
+==================================================
+Contents of C:\Users\eytan\Desktop\hebrewclubweb\server\src\admin\Controller\adminSystemSettingsController.ts:
+==================================================
+import { Request, Response } from 'express';
+import SystemSettings from '../models/SystemSettings';
+
+export const updateSystemSettings = async (req: Request, res: Response) => {
+  try {
+    const { settingKey, settingValue } = req.body;
+    const updatedSetting = await SystemSettings.findOneAndUpdate(
+      { key: settingKey },
+      { value: settingValue },
+      { new: true, upsert: true }
+    );
+    res.json(updatedSetting);
+  } catch (error) {
+    res.status(500).json({ message: 'Error updating system settings', error });
+  }
+};
+
+export const getSystemSettings = async (req: Request, res: Response) => {
+  try {
+    const settings = await SystemSettings.find();
+    res.json(settings);
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching system settings', error });
+  }
+};
+
+==================================================
+Contents of C:\Users\eytan\Desktop\hebrewclubweb\server\src\admin\Controller\adminTaskController.ts:
+==================================================
+import { Request, Response } from 'express';
+import Assignment from '../models/Assignment';
+
+export const getTaskManagementData = async (req: Request, res: Response) => {
+  try {
+    const assignments = await Assignment.find();
+    res.json(assignments);
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching task data', error });
+  }
+};
+
+export const createTask = async (req: Request, res: Response) => {
+  // Implementation for creating a new task
+};
+
+export const updateTask = async (req: Request, res: Response) => {
+  // Implementation for updating a task
+};
+
+export const deleteTask = async (req: Request, res: Response) => {
+  // Implementation for deleting a task
+};
+
+==================================================
+Contents of C:\Users\eytan\Desktop\hebrewclubweb\server\src\admin\Controller\adminUserController.ts:
+==================================================
+import { Request, Response } from 'express';
+import User from '../models/User';
+
+export const getUserManagementData = async (req: Request, res: Response) => {
+  try {
+    const users = await User.find().select('-password');
+    res.json(users);
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching user data', error });
+  }
+};
+
+export const createUser = async (req: Request, res: Response) => {
+  // Implementation for creating a new user
+};
+
+export const updateUser = async (req: Request, res: Response) => {
+  // Implementation for updating a user
+};
+
+export const deleteUser = async (req: Request, res: Response) => {
+  // Implementation for deleting a user
+};
+
+==================================================
+Contents of C:\Users\eytan\Desktop\hebrewclubweb\server\src\admin\models\SystemSettings.ts:
+==================================================
+import mongoose, { Schema, Document } from 'mongoose';
+
+export interface ISystemSettings extends Document {
+  key: string;
+  value: any;
+}
+
+const SystemSettingsSchema: Schema = new Schema({
+  key: { type: String, required: true, unique: true },
+  value: { type: Schema.Types.Mixed, required: true },
+});
+
+export default mongoose.model<ISystemSettings>('SystemSettings', SystemSettingsSchema);
+
+==================================================
+Contents of C:\Users\eytan\Desktop\hebrewclubweb\server\src\admin\routes\adminRoutes.ts:
+==================================================
+import express from 'express';
+import { authenticateToken, roleCheck } from '../../middleware/authMiddleware';
+import * as adminUserController from '../../admin/Controller/adminUserController';
+import * as adminCourseController from '../../admin/Controller/adminCourseController';
+import * as adminTaskController from '../../admin/Controller/adminTaskController';
+import * as adminGradeController from '../../admin/Controller/adminGradeController';
+import * as adminMessageController from '../../admin/Controller/adminMessageController';
+import * as adminPaymentController from '../../admin/Controller/adminPaymentController';
+import * as adminLeadController from '../../admin/Controller/adminLeadController';
+
+const router = express.Router();
+
+// Apply authentication and admin role check to all routes
+router.use(authenticateToken, roleCheck(['admin']));
+
+// User management routes
+router.get('/users', adminUserController.getUserManagementData);
+router.post('/users', adminUserController.createUser);
+router.put('/users/:id', adminUserController.updateUser);
+router.delete('/users/:id', adminUserController.deleteUser);
+
+// Course management routes
+router.get('/courses', adminCourseController.getCourseManagementData);
+router.post('/courses', adminCourseController.createCourse);
+router.put('/courses/:id', adminCourseController.updateCourse);
+router.delete('/courses/:id', adminCourseController.deleteCourse);
+
+// Task management routes
+router.get('/tasks', adminTaskController.getTaskManagementData);
+router.post('/tasks', adminTaskController.createTask);
+router.put('/tasks/:id', adminTaskController.updateTask);
+router.delete('/tasks/:id', adminTaskController.deleteTask);
+
+// Grade management routes
+router.get('/grades', adminGradeController.getGradeManagementData);
+router.post('/grades', adminGradeController.createGrade);
+router.put('/grades/:id', adminGradeController.updateGrade);
+router.delete('/grades/:id', adminGradeController.deleteGrade);
+
+// Message management routes
+router.get('/messages', adminMessageController.getMessageManagementData);
+router.post('/messages', adminMessageController.sendAdminMessage);
+router.delete('/messages/:id', adminMessageController.deleteMessage);
+
+// Payment management routes
+router.get('/payments', adminPaymentController.getPaymentManagementData);
+router.post('/payments/process', adminPaymentController.processPayment);
+router.post('/payments/refund', adminPaymentController.refundPayment);
+
+// Lead management routes
+router.get('/leads', adminLeadController.getLeadManagementData);
+router.post('/leads', adminLeadController.createLead);
+router.put('/leads/:id', adminLeadController.updateLead);
+router.delete('/leads/:id', adminLeadController.deleteLead);
+
+export default router;
+
+==================================================
+Contents of C:\Users\eytan\Desktop\hebrewclubweb\server\src\admin\routes\adminStatisticsRoutes.ts:
+==================================================
+import express from 'express';
+import { authenticateToken, roleCheck } from '../../middleware/authMiddleware';
+import * as adminStatisticsController from '../../admin/Controller/adminStatisticsController';
+
+const router = express.Router();
+
+router.use(authenticateToken, roleCheck(['admin']));
+
+router.get('/dashboard', adminStatisticsController.getDashboardStats);
+router.get('/user-growth', adminStatisticsController.getUserGrowthStats);
+router.get('/course-popularity', adminStatisticsController.getCoursePopularityStats);
+router.get('/revenue', adminStatisticsController.getRevenueStats);
+
+export default router;
+
+==================================================
+Contents of C:\Users\eytan\Desktop\hebrewclubweb\server\src\admin\routes\adminSystemSettingsRoutes.ts:
+==================================================
+import express from 'express';
+import { authenticateToken, roleCheck } from '../../middleware/authMiddleware';
+import * as adminSystemSettingsController from '../../admin/Controller/adminSystemSettingsController';
+
+const router = express.Router();
+
+router.use(authenticateToken, roleCheck(['admin']));
+
+router.put('/', adminSystemSettingsController.updateSystemSettings);
+router.get('/', adminSystemSettingsController.getSystemSettings);
+
+export default router;
+
+==================================================
+Contents of C:\Users\eytan\Desktop\hebrewclubweb\server\src\config\corsConfig.ts:
+==================================================
+import cors from 'cors';
+
+const corsOptions: cors.CorsOptions = {
+  origin: ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:3000', 'http://localhost:5175'],
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-CSRF-Token']
+};
+
+export default corsOptions;
+
+==================================================
+Contents of C:\Users\eytan\Desktop\hebrewclubweb\server\src\config\csrfConfig.ts:
+==================================================
+import csurf from 'csurf';
+
+const csrfProtection = csurf({
+  cookie: true
+});
+
+export default csrfProtection;
+
+==================================================
+Contents of C:\Users\eytan\Desktop\hebrewclubweb\server\src\controllers\assignmentController.ts:
+==================================================
+import { Request, Response } from 'express';
+import Assignment from '../models/Assignment';
+
+export const getAssignments = async (req: Request, res: Response) => {
+  try {
+    const assignments = await Assignment.find({ course: req.params.courseId });
+    res.json(assignments);
+  } catch (error) {
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+export const createAssignment = async (req: Request, res: Response) => {
+  try {
+    const newAssignment = new Assignment(req.body);
+    const savedAssignment = await newAssignment.save();
+    res.status(201).json(savedAssignment);
+  } catch (error) {
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// Add more functions for updating and deleting assignments
+
+==================================================
+Contents of C:\Users\eytan\Desktop\hebrewclubweb\server\src\controllers\courseController.ts:
+==================================================
+import { Request, Response } from 'express';
+import Course from '../models/Course';
+
+export const getCourses = async (req: Request, res: Response) => {
+  try {
+    const courses = await Course.find();
+    res.json(courses);
+  } catch (error) {
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+export const getCourseById = async (req: Request, res: Response) => {
+  try {
+    const course = await Course.findById(req.params.id);
+    if (!course) {
+      return res.status(404).json({ message: 'Course not found' });
+    }
+    res.json(course);
+  } catch (error) {
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// Add more functions for creating, updating, and deleting courses
+
+==================================================
+Contents of C:\Users\eytan\Desktop\hebrewclubweb\server\src\controllers\gradeController.ts:
+==================================================
+import { Request, Response } from 'express';
+import Grade from '../models/Grade';
+
+export const getGrades = async (req: Request, res: Response) => {
+  try {
+    const grades = await Grade.find({ student: req.user.id })
+      .populate('course', 'title')
+      .populate('assignment', 'title');
+    res.json(grades);
+  } catch (error) {
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+export const addGrade = async (req: Request, res: Response) => {
+  try {
+    const newGrade = new Grade({
+      ...req.body,
+      student: req.user.id,
+    });
+    const savedGrade = await newGrade.save();
+    res.status(201).json(savedGrade);
+  } catch (error) {
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// Add more functions as needed
+
+==================================================
+Contents of C:\Users\eytan\Desktop\hebrewclubweb\server\src\controllers\leadController.ts:
+==================================================
+import { Request, Response } from 'express';
+import Lead from '../models/Lead';
+
+export const createLead = async (req: Request, res: Response) => {
+  try {
+    const { name, email } = req.body;
+    const newLead = new Lead({ name, email });
+    await newLead.save();
+    res.status(201).json({ message: 'Lead created successfully', lead: newLead });
+  } catch (error) {
+    res.status(400).json({ message: 'Error creating lead', error });
+  }
+};
+
+==================================================
+Contents of C:\Users\eytan\Desktop\hebrewclubweb\server\src\controllers\messageController.ts:
+==================================================
+import { Request, Response } from 'express';
+import Message from '../models/Message';
+
+export const getMessages = async (req: Request, res: Response) => {
+  try {
+    const messages = await Message.find({ user: req.user!.id }).sort({ createdAt: -1 });
+    res.json(messages);
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching messages', error });
+  }
+};
+
+export const sendMessage = async (req: Request, res: Response) => {
+  try {
+    const { content, recipient } = req.body;
+    const newMessage = new Message({
+      sender: req.user!.id,
+      recipient,
+      content
+    });
+    await newMessage.save();
+    res.status(201).json(newMessage);
+  } catch (error) {
+    res.status(500).json({ message: 'Error sending message', error });
+  }
+};
+
+==================================================
+Contents of C:\Users\eytan\Desktop\hebrewclubweb\server\src\controllers\paymentController.ts:
+==================================================
+import { Request, Response } from 'express';
+import Payment from '../models/Payment';
+
+export const getPayments = async (req: Request, res: Response) => {
+  try {
+    const payments = await Payment.find({ user: req.user!.id }).sort({ createdAt: -1 });
+    res.json(payments);
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching payments', error });
+  }
+};
+
+export const makePayment = async (req: Request, res: Response) => {
+  try {
+    const { amount, description } = req.body;
+    const newPayment = new Payment({
+      user: req.user!.id,
+      amount,
+      description
+    });
+    await newPayment.save();
+    res.status(201).json(newPayment);
+  } catch (error) {
+    res.status(500).json({ message: 'Error making payment', error });
+  }
+};
+
+==================================================
+Contents of C:\Users\eytan\Desktop\hebrewclubweb\server\src\controllers\personalAreaController.ts:
+==================================================
+import { Request, Response } from 'express';
+import User from '../models/User';
+import Course from '../models/Course'; // בהנחה שיש לך מודל Course
+
+export const getProfile = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const userId = req.user?.id;
+    const user = await User.findById(userId).select('-password');
+    if (!user) {
+      res.status(404).json({ message: 'משתמש לא נמצא' });
+      return;
+    }
+    res.json(user);
+  } catch (err) {
+    console.error('שגיאה בטעינת פרופיל המשתמש:', err);
+    res.status(500).json({ message: 'שגיאת שרת' });
+  }
+};
+
+export const getCourses = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const userId = req.user?.id;
+    const courses = await Course.find({ students: userId });
+    res.json(courses);
+  } catch (err) {
+    console.error('שגיאה בטעינת קורסי המשתמש:', err);
+    res.status(500).json({ message: 'שגיאת שרת' });
+  }
+};
+
+export const updateProfile = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const userId = req.user?.id;
+    const updatedUser = await User.findByIdAndUpdate(userId, req.body, { new: true }).select('-password');
+    if (!updatedUser) {
+      res.status(404).json({ message: 'משתמש לא נמצא' });
+      return;
+    }
+    res.json(updatedUser);
+  } catch (err) {
+    console.error('שגיאה בעדכון פרופיל המשתמש:', err);
+    res.status(500).json({ message: 'שגיאת שרת' });
+  }
+};
+
+export const getAssignments = async (req: Request, res: Response): Promise<void> => {
+  // יש להוסיף לוגיקה לטעינת המשימות של המשתמש
+  res.json({ message: 'טעינת משימות המשתמש' });
+};
+
+export const getGrades = async (req: Request, res: Response): Promise<void> => {
+  // יש להוסיף לוגיקה לטעינת הציונים של המשתמש
+  res.json({ message: 'טעינת ציוני המשתמש' });
+};
+
+==================================================
+Contents of C:\Users\eytan\Desktop\hebrewclubweb\server\src\controllers\systemSettingsController.ts:
+==================================================
+import { Request, Response } from 'express';
+import User from '../models/User';
+
+export const updateSystemSettings = async (req: Request, res: Response) => {
+  try {
+    // Implement logic to update system settings
+    // This might involve updating a settings document in the database
+    // or modifying environment variables
+
+    res.json({ message: 'System settings updated successfully' });
+  } catch (error) {
+    res.status(500).json({ message: 'Error updating system settings', error });
+  }
+};
+
+export const getSystemSettings = async (req: Request, res: Response) => {
+  try {
+    // Implement logic to retrieve current system settings
+
+    res.json({ 
+      // Return current system settings
+    });
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching system settings', error });
+  }
+};
+
+==================================================
+Contents of C:\Users\eytan\Desktop\hebrewclubweb\server\src\controllers\userController.ts:
+==================================================
+import { Request, Response } from 'express';
+import User, { IUser } from '../models/User';
+import jwt from 'jsonwebtoken';
+import { validationResult } from 'express-validator';
+import nodemailer from 'nodemailer';
+import speakeasy from 'speakeasy';
+import { OAuth2Client } from 'google-auth-library';
+import UserActionLog from '../models/UserActionLog';
+import crypto from 'crypto';
+const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+const MAX_LOGIN_ATTEMPTS = 5;
+const LOCK_TIME = 2 * 60 * 60 * 1000; // 2 hours
+
+const transporter = nodemailer.createTransport({
+  service: 'gmail',
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS
+  }
+});
+
+export const getCsrfToken = (req: Request, res: Response) => {
+  res.json({ csrfToken: req.csrfToken() });
+};
+
+export const registerUser = async (req: Request, res: Response): Promise<void> => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    res.status(400).json({ errors: errors.array() });
+    return;
+  }
+
+  try {
+    const { name, email, password, username } = req.body;
+
+    // בדיקה אם קיים משתמש עם אותו אימייל
+    let userByEmail = await User.findOne({ email });
+    if (userByEmail) {
+      res.status(400).json({ message: 'כתובת האימייל כבר בשימוש', code: 'EMAIL_EXISTS' });
+      return;
+    }
+
+    // בדיקה אם קיים משתמש עם אותו שם משתמש
+    let userByUsername = await User.findOne({ username });
+    if (userByUsername) {
+      res.status(400).json({ message: 'שם המשתמש כבר בשימוש', code: 'USERNAME_EXISTS' });
+      return;
+    }
+
+    const user = new User({ name, email, password, username });
+    await user.save();
+
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET as string, { expiresIn: '1d' });
+
+    await logUserAction(user._id.toString(), 'הרשמה', `משתמש נרשם עם כתובת האימייל: ${email}`);
+
+    res.json({
+      token,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        username: user.username
+      }
+    });
+  } catch (err) {
+    console.error('שגיאת הרשמה:', err);
+    res.status(500).json({ message: 'שגיאת שרת', code: 'SERVER_ERROR', error: err instanceof Error ? err.message : 'שגיאה לא ידועה' });
+  }
+};
+
+export const loginUser = async (req: Request, res: Response): Promise<void> => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    res.status(400).json({ errors: errors.array() });
+    return;
+  }
+
+  try {
+    const { username, password } = req.body;
+    
+    const user = await User.findOne({
+      $or: [{ email: username }, { username: username }]
+    }) as IUser | null;
+
+    if (!user) {
+      res.status(400).json({ message: 'פרטי התחברות שגויים', code: 'INVALID_CREDENTIALS' });
+      return;
+    }
+
+    if (user.lockUntil && user.lockUntil > Date.now()) {
+      res.status(400).json({ message: 'החשבון נעול. נסה שוב מאוחר יותר', code: 'ACCOUNT_LOCKED' });
+      return;
+    }
+    
+    const isMatch = await user.comparePassword(password);
+    if (!isMatch) {
+      user.failedLoginAttempts = (user.failedLoginAttempts || 0) + 1;
+      if (user.failedLoginAttempts >= MAX_LOGIN_ATTEMPTS) {
+        user.lockUntil = Date.now() + LOCK_TIME;
+      }
+      await user.save();
+      res.status(400).json({ message: 'פרטי התחברות שגויים', code: 'INVALID_CREDENTIALS' });
+      return;
+    }
+    
+    user.failedLoginAttempts = 0;
+    user.lockUntil = undefined;
+    await user.save();
+
+    if (user.twoFactorSecret) {
+      const tempToken = jwt.sign({ id: user._id }, process.env.JWT_SECRET as string, { expiresIn: '5m' });
+      res.json({ requireTwoFactor: true, tempToken });
+      return;
+    }
+    
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET as string, { expiresIn: '1d' });
+    
+    await logUserAction(user._id.toString(), 'התחברות', `משתמש התחבר מכתובת IP: ${req.ip}`);
+
+    res.json({
+      token,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email
+      }
+    });
+  } catch (err) {
+    console.error('שגיאת התחברות:', err);
+    res.status(500).json({ message: 'שגיאת שרת', code: 'SERVER_ERROR', error: err instanceof Error ? err.message : 'שגיאה לא ידועה' });
+  }
+};
+export const forgotPassword = async (req: Request, res: Response): Promise<void> => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    res.status(400).json({ errors: errors.array() });
+    return;
+  }
+
+  try {
+    const { email } = req.body;
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      // We don't want to reveal whether a user exists or not
+      res.json({ message: 'אם המשתמש קיים, נשלח אימייל לאיפוס סיסמה' });
+      return;
+    }
+
+    // Generate a password reset token
+    const resetToken = crypto.randomBytes(20).toString('hex');
+    user.resetPasswordToken = resetToken;
+    user.resetPasswordExpires = Date.now() + 3600000; // 1 hour
+
+    await user.save();
+
+    // Send email with reset link
+    const resetUrl = `${process.env.FRONTEND_URL}/reset-password/${resetToken}`;
+    const mailOptions = {
+      to: user.email,
+      from: process.env.EMAIL_FROM,
+      subject: 'איפוס סיסמה',
+      text: `אתה מקבל את זה כי אתה (או מישהו אחר) ביקש לאפס את הסיסמה שלך.\n\n
+             אנא לחץ על הקישור הבא, או הדבק אותו בדפדפן שלך כדי להשלים את התהליך:\n\n
+             ${resetUrl}\n\n
+             אם לא ביקשת את זה, אנא התעלם מאימייל זה והסיסמה שלך תישאר ללא שינוי.\n`
+    };
+
+    await transporter.sendMail(mailOptions);
+
+    await logUserAction(user._id.toString(), 'בקשת איפוס סיסמה', `נשלח אימייל לאיפוס סיסמה לכתובת: ${email}`);
+
+    res.json({ message: 'אם המשתמש קיים, נשלח אימייל לאיפוס סיסמה' });
+  } catch (err) {
+    console.error('שגיאת איפוס סיסמה:', err);
+    res.status(500).json({ message: 'שגיאת שרת', code: 'SERVER_ERROR', error: err instanceof Error ? err.message : 'שגיאה לא ידועה' });
+  }
+};
+export const resetPassword = async (req: Request, res: Response): Promise<void> => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    res.status(400).json({ errors: errors.array() });
+    return;
+  }
+
+  try {
+    const { token, newPassword } = req.body;
+    const user = await User.findOne({
+      resetPasswordToken: token,
+      resetPasswordExpires: { $gt: Date.now() }
+    });
+
+    if (!user) {
+      res.status(400).json({ message: 'טוקן איפוס סיסמה לא חוקי או פג תוקף', code: 'INVALID_TOKEN' });
+      return;
+    }
+
+    user.password = newPassword;
+    user.resetPasswordToken = undefined;
+    user.resetPasswordExpires = undefined;
+    await user.save();
+
+    await logUserAction(user._id.toString(), 'איפוס סיסמה', `סיסמה אופסה בהצלחה`);
+
+    res.json({ message: 'סיסמה אופסה בהצלחה' });
+  } catch (err) {
+    console.error('שגיאת איפוס סיסמה:', err);
+    res.status(500).json({ message: 'שגיאת שרת', code: 'SERVER_ERROR', error: err instanceof Error ? err.message : 'שגיאה לא ידועה' });
+  }
+};
+export const verifyTwoFactor = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { userId, token } = req.body;
+    const user = await User.findById(userId) as IUser | null;
+    if (!user || !user.twoFactorSecret) {
+      res.status(400).json({ message: 'בקשה לא חוקית', code: 'INVALID_REQUEST' });
+      return;
+    }
+
+    const verified = speakeasy.totp.verify({
+      secret: user.twoFactorSecret,
+      encoding: 'base32',
+      token
+    });
+
+    if (!verified) {
+      res.status(400).json({ message: 'קוד לא חוקי', code: 'INVALID_TOKEN' });
+      return;
+    }
+
+    const jwtToken = jwt.sign({ id: user._id }, process.env.JWT_SECRET as string, { expiresIn: '1d' });
+    
+    await logUserAction(user._id.toString(), 'אימות דו-שלבי', `משתמש השלים אימות דו-שלבי`);
+
+    res.json({ token: jwtToken });
+  } catch (err) {
+    console.error('שגיאת אימות דו-שלבי:', err);
+    res.status(500).json({ message: 'שגיאת שרת', code: 'SERVER_ERROR', error: err instanceof Error ? err.message : 'שגיאה לא ידועה' });
+  }
+};
+
+export const googleAuth = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { token } = req.body;
+    const ticket = await client.verifyIdToken({
+      idToken: token,
+      audience: process.env.GOOGLE_CLIENT_ID
+    });
+    const payload = ticket.getPayload();
+    if (!payload) {
+      res.status(400).json({ message: 'טוקן Google לא חוקי', code: 'INVALID_GOOGLE_TOKEN' });
+      return;
+    }
+    const { email, name, sub: googleId } = payload;
+
+    let user = await User.findOne({ email }) as IUser | null;
+    if (!user) {
+      user = new User({ email, name, googleId });
+      await user.save();
+    } else if (!user.googleId) {
+      user.googleId = googleId;
+      await user.save();
+    }
+
+    const jwtToken = jwt.sign({ id: user._id }, process.env.JWT_SECRET as string, { expiresIn: '1d' });
+    
+    await logUserAction(user._id.toString(), 'אימות Google', `משתמש התחבר באמצעות Google`);
+
+    res.json({
+      token: jwtToken,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email
+      }
+    });
+  } catch (err) {
+    console.error('שגיאת אימות Google:', err);
+    res.status(500).json({ message: 'שגיאת שרת', code: 'SERVER_ERROR', error: err instanceof Error ? err.message : 'שגיאה לא ידועה' });
+  }
+};
+export const logoutUser = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const userId = req.user?.id;
+    if (userId) {
+      await logUserAction(userId, 'התנתקות', `משתמש התנתק מהמערכת`);
+    }
+    
+    // מחיקת ה-token מה-cookie (אם אתה משתמש ב-cookie לאחסון ה-token)
+    res.clearCookie('token');
+    
+    res.json({ message: 'התנתקות בוצעה בהצלחה' });
+  } catch (err) {
+    console.error('שגיאת התנתקות:', err);
+    res.status(500).json({ message: 'שגיאת שרת', code: 'SERVER_ERROR', error: err instanceof Error ? err.message : 'שגיאה לא ידועה' });
+  }
+};
+const logUserAction = async (userId: string, action: string, details: string): Promise<void> => {
+  try {
+    const log = new UserActionLog({ userId, action, details });
+    await log.save();
+  } catch (error) {
+    console.error('שגיאה בתיעוד פעולת משתמש:', error);
+  }
+};
+export const updateUserProfile = async (req: Request, res: Response): Promise<void> => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    res.status(400).json({ errors: errors.array() });
+    return;
+  }
+
+  try {
+    const userId = req.user?.id; // נניח שיש לנו middleware שמוסיף את המשתמש לreq
+    const { name, email } = req.body;
+
+    const user = await User.findById(userId);
+    if (!user) {
+      res.status(404).json({ message: 'משתמש לא נמצא', code: 'USER_NOT_FOUND' });
+      return;
+    }
+
+    if (name) user.name = name;
+    if (email && email !== user.email) {
+      const existingUser = await User.findOne({ email });
+      if (existingUser) {
+        res.status(400).json({ message: 'כתובת האימייל כבר בשימוש', code: 'EMAIL_IN_USE' });
+        return;
+      }
+      user.email = email;
+    }
+
+    await user.save();
+
+    await logUserAction(user._id.toString(), 'עדכון פרופיל', `המשתמש עדכן את פרטי הפרופיל שלו`);
+
+    res.json({
+      message: 'פרטי המשתמש עודכנו בהצלחה',
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email
+      }
+    });
+  } catch (err) {
+    console.error('שגיאה בעדכון פרטי משתמש:', err);
+    res.status(500).json({ message: 'שגיאת שרת', code: 'SERVER_ERROR', error: err instanceof Error ? err.message : 'שגיאה לא ידועה' });
+  }
+};
+
+export const deleteUserAccount = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const userId = req.user?.id; // נניח שיש לנו middleware שמוסיף את המשתמש לreq
+
+    const user = await User.findById(userId);
+    if (!user) {
+      res.status(404).json({ message: 'משתמש לא נמצא', code: 'USER_NOT_FOUND' });
+      return;
+    }
+
+    await User.findByIdAndDelete(userId);
+
+    await logUserAction(userId, 'מחיקת חשבון', `המשתמש מחק את החשבון שלו`);
+
+    res.json({ message: 'החשבון נמחק בהצלחה' });
+  } catch (err) {
+    console.error('שגיאה במחיקת חשבון משתמש:', err);
+    res.status(500).json({ message: 'שגיאת שרת', code: 'SERVER_ERROR', error: err instanceof Error ? err.message : 'שגיאה לא ידועה' });
+  }
+};
+export default {
+  registerUser,
+  loginUser,
+  verifyTwoFactor,
+  getCsrfToken,
+  googleAuth,
+  forgotPassword,
+  resetPassword,
+  updateUserProfile,
+  deleteUserAccount,
+};
+
+==================================================
+Contents of C:\Users\eytan\Desktop\hebrewclubweb\server\src\middleware\authMiddleware.ts:
+==================================================
+import { Request, Response, NextFunction } from 'express';
+import jwt from 'jsonwebtoken';
+import User, { IUser } from '../models/User';
+
+declare global {
+  namespace Express {
+    interface Request {
+      user?: IUser;
+    }
+  }
+}
+
+export const authenticateToken = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const token = req.header('Authorization')?.replace('Bearer ', '');
+
+    if (!token) {
+      res.status(401).json({ message: 'נא להתחבר', code: 'AUTHENTICATION_REQUIRED' });
+      return;
+    }
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as { id: string };
+    const user = await User.findById(decoded.id) as IUser | null;
+
+    if (!user) {
+      res.status(401).json({ message: 'נא להתחבר', code: 'AUTHENTICATION_REQUIRED' });
+      return;
+    }
+
+    req.user = user;
+    next();
+  } catch (error) {
+    console.error('שגיאת אימות:', error);
+    res.status(401).json({ message: 'נא להתחבר', code: 'AUTHENTICATION_REQUIRED' });
+  }
+};
+
+export const roleCheck = (roles: string[]) => {
+  return (req: Request, res: Response, next: NextFunction): void => {
+    if (!req.user) {
+      res.status(401).json({ message: 'נא להתחבר', code: 'AUTHENTICATION_REQUIRED' });
+      return;
+    }
+    if (!roles.includes(req.user.role)) {
+      res.status(403).json({ message: 'גישה נדחתה', code: 'ACCESS_DENIED' });
+      return;
+    }
+    next();
+  };
+};
+
+export const csrfProtection = (req: Request, res: Response, next: NextFunction): void => {
+  const csrfToken = req.header('X-CSRF-Token');
+  if (!csrfToken || csrfToken !== req.csrfToken()) {
+    res.status(403).json({ message: 'אסימון CSRF לא חוקי', code: 'INVALID_CSRF_TOKEN' });
+    return;
+  }
+  next();
+};
+
+==================================================
+Contents of C:\Users\eytan\Desktop\hebrewclubweb\server\src\middleware\csrfProtection.ts:
+==================================================
+import csurf from 'csurf';
+
+export const csrfProtection = csurf({
+  cookie: {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax'
+  }
+});
+
+==================================================
+Contents of C:\Users\eytan\Desktop\hebrewclubweb\server\src\middleware\errorHandler.ts:
+==================================================
+import { Request, Response, NextFunction } from 'express';
+
+export const errorHandler = (err: any, req: Request, res: Response, next: NextFunction) => {
+  console.error(err.stack);
+  
+  const statusCode = err.statusCode || 500;
+  const message = err.message || 'An unexpected error occurred';
+  
+  res.status(statusCode).json({
+    status: 'error',
+    statusCode,
+    message
+  });
+};
+
+==================================================
+Contents of C:\Users\eytan\Desktop\hebrewclubweb\server\src\middleware\logger.ts:
+==================================================
+import { Request, Response, NextFunction } from 'express';
+
+export const logger = (req: Request, res: Response, next: NextFunction) => {
+  console.log(`${new Date().toISOString()} - ${req.method} ${req.url}`);
+  next();
+};
+
+==================================================
+Contents of C:\Users\eytan\Desktop\hebrewclubweb\server\src\models\Assignment.ts:
+==================================================
+import mongoose, { Schema, Document } from 'mongoose';
+
+export interface IAssignment extends Document {
+  title: string;
+  description: string;
+  course: string;
+  dueDate: Date;
+  points: number;
+}
+
+const AssignmentSchema: Schema = new Schema({
+  title: { type: String, required: true },
+  description: { type: String, required: true },
+  course: { type: Schema.Types.ObjectId, ref: 'Course', required: true },
+  dueDate: { type: Date, required: true },
+  points: { type: Number, required: true },
+});
+
+export default mongoose.model<IAssignment>('Assignment', AssignmentSchema);
+
+==================================================
+Contents of C:\Users\eytan\Desktop\hebrewclubweb\server\src\models\Course.ts:
+==================================================
+import mongoose, { Schema, Document } from 'mongoose';
+
+export interface ICourse extends Document {
+  title: string;
+  description: string;
+  instructor: string;
+  duration: number;
+  level: 'beginner' | 'intermediate' | 'advanced';
+  students: string[];
+}
+
+const CourseSchema: Schema = new Schema({
+  title: { type: String, required: true },
+  description: { type: String, required: true },
+  instructor: { type: String, required: true },
+  duration: { type: Number, required: true },
+  level: { type: String, enum: ['beginner', 'intermediate', 'advanced'], required: true },
+  students: [{ type: Schema.Types.ObjectId, ref: 'User' }],
+});
+
+export default mongoose.model<ICourse>('Course', CourseSchema);
+
+==================================================
+Contents of C:\Users\eytan\Desktop\hebrewclubweb\server\src\models\Grade.ts:
+==================================================
+import mongoose, { Schema, Document } from 'mongoose';
+
+export interface IGrade extends Document {
+  student: string;
+  course: string;
+  assignment: string;
+  score: number;
+  maxScore: number;
+  date: Date;
+}
+
+const GradeSchema: Schema = new Schema({
+  student: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+  course: { type: Schema.Types.ObjectId, ref: 'Course', required: true },
+  assignment: { type: Schema.Types.ObjectId, ref: 'Assignment', required: true },
+  score: { type: Number, required: true },
+  maxScore: { type: Number, required: true },
+  date: { type: Date, default: Date.now },
+});
+
+export default mongoose.model<IGrade>('Grade', GradeSchema);
+
+==================================================
+Contents of C:\Users\eytan\Desktop\hebrewclubweb\server\src\models\Lead.ts:
+==================================================
+import mongoose, { Schema, Document } from 'mongoose';
+
+export interface ILead extends Document {
+  name: string;
+  email: string;
+  createdAt: Date;
+}
+
+const LeadSchema: Schema = new Schema({
+  name: { type: String, required: true },
+  email: { type: String, required: true, unique: true },
+  createdAt: { type: Date, default: Date.now },
+});
+
+export default mongoose.model<ILead>('Lead', LeadSchema);
+
+==================================================
+Contents of C:\Users\eytan\Desktop\hebrewclubweb\server\src\models\Message.ts:
+==================================================
+import mongoose, { Schema, Document } from 'mongoose';
+
+export interface IMessage extends Document {
+  sender: string;
+  recipient: string;
+  content: string;
+  createdAt: Date;
+}
+
+const MessageSchema: Schema = new Schema({
+  sender: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+  recipient: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+  content: { type: String, required: true },
+  createdAt: { type: Date, default: Date.now }
+});
+
+export default mongoose.model<IMessage>('Message', MessageSchema);
+
+==================================================
+Contents of C:\Users\eytan\Desktop\hebrewclubweb\server\src\models\Payment.ts:
+==================================================
+import mongoose, { Schema, Document } from 'mongoose';
+
+export interface IPayment extends Document {
+  user: string;
+  amount: number;
+  description: string;
+  createdAt: Date;
+}
+
+const PaymentSchema: Schema = new Schema({
+  user: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+  amount: { type: Number, required: true },
+  description: { type: String, required: true },
+  createdAt: { type: Date, default: Date.now }
+});
+
+export default mongoose.model<IPayment>('Payment', PaymentSchema);
+
+==================================================
+Contents of C:\Users\eytan\Desktop\hebrewclubweb\server\src\models\User.ts:
+==================================================
+import mongoose, { Schema, Document } from 'mongoose';
+import bcrypt from 'bcryptjs';
+
+export interface IUser extends Document {
+  name: string;
+  username: string; // הוספנו שדה username
+  email: string;
+  password: string;
+  role: string;
+  failedLoginAttempts: number;
+  lockUntil: number | undefined;
+  twoFactorSecret: string | undefined;
+  resetPasswordToken: string | undefined;
+  resetPasswordExpires: number | undefined;
+  googleId?: string;
+  facebookId?: string;
+  emailVerificationToken?: string;
+  isEmailVerified: boolean;
+  jwtSecret?: string;
+  comparePassword(candidatePassword: string): Promise<boolean>;
+}
+
+const UserSchema: Schema = new Schema({
+  name: { type: String, required: true },
+  username: { type: String, required: true, unique: true },
+  email: { type: String, required: true, unique: true },
+  password: { type: String, required: true },
+  role: { type: String, default: 'user' },
+  failedLoginAttempts: { type: Number, default: 0 },
+  lockUntil: { type: Number },
+  twoFactorSecret: { type: String },
+  resetPasswordToken: { type: String },
+  resetPasswordExpires: { type: Number },
+  googleId: { type: String },
+  facebookId: { type: String },
+  emailVerificationToken: { type: String },
+  isEmailVerified: { type: Boolean, default: false },
+  jwtSecret: { type: String }
+});
+
+UserSchema.pre<IUser>('save', async function(next) {
+  if (!this.isModified('password')) return next();
+  
+  const salt = await bcrypt.genSalt(10);
+  this.password = await bcrypt.hash(this.password, salt);
+  next();
+});
+
+UserSchema.methods.comparePassword = async function(candidatePassword: string): Promise<boolean> {
+  return bcrypt.compare(candidatePassword, this.password);
+};
+
+export default mongoose.model<IUser>('User', UserSchema);
+
+==================================================
+Contents of C:\Users\eytan\Desktop\hebrewclubweb\server\src\models\UserActionLog.ts:
+==================================================
+import mongoose, { Document, Schema } from 'mongoose';
+
+export interface IUserActionLog extends Document {
+  userId: mongoose.Types.ObjectId;
+  action: string;
+  details: string;
+  createdAt: Date;
+}
+
+const UserActionLogSchema: Schema = new Schema({
+  userId: {
+    type: Schema.Types.ObjectId,
+    ref: 'User',
+    required: true
+  },
+  action: {
+    type: String,
+    required: true
+  },
+  details: {
+    type: String,
+    required: true
+  }
+}, { timestamps: true });
+
+export default mongoose.model<IUserActionLog>('UserActionLog', UserActionLogSchema);
+
+==================================================
+Contents of C:\Users\eytan\Desktop\hebrewclubweb\server\src\routes\assignmentRoutes.ts:
+==================================================
+import express from 'express';
+import { getAssignments, createAssignment } from '../controllers/assignmentController';
+import { authenticateToken } from '../middleware/authMiddleware';
+
+const router = express.Router();
+
+router.get('/:courseId', authenticateToken, getAssignments);
+router.post('/', authenticateToken, createAssignment);
+
+// Add more routes for updating and deleting assignments
+
+export default router;
+
+==================================================
+Contents of C:\Users\eytan\Desktop\hebrewclubweb\server\src\routes\authRoutes.ts:
+==================================================
+import express from 'express';
+import { body, ValidationChain } from 'express-validator';
+import { csrfProtection } from '../middleware/csrfProtection';
+import { getCsrfToken, registerUser, loginUser, verifyTwoFactor, googleAuth, resetPassword, forgotPassword, logoutUser } from '../controllers/userController';
+import { updateUserProfile, deleteUserAccount } from '../controllers/userController';
+import { validateUpdateProfile } from '../validations';
+const router = express.Router();
+
+// Middleware for input validation
+const validateRegistration: ValidationChain[] = [
+  body('name').notEmpty().withMessage('שם הוא שדה חובה'),
+  body('email').isEmail().withMessage('כתובת אימייל לא חוקית'),
+  body('password').isLength({ min: 6 }).withMessage('הסיסמה חייבת להכיל לפחות 6 תווים')
+];
+
+const validateLogin: ValidationChain[] = [
+  body('username').notEmpty().withMessage('שם משתמש או אימייל הוא שדה חובה'),
+  body('password').notEmpty().withMessage('סיסמה היא שדה חובה')
+];
+const validateForgotPassword: ValidationChain[] = [
+  body('email').isEmail().withMessage('כתובת אימייל לא חוקית')
+];
+const validateResetPassword: ValidationChain[] = [
+  body('token').notEmpty().withMessage('טוקן איפוס סיסמה הוא שדה חובה'),
+  body('newPassword').isLength({ min: 6 }).withMessage('הסיסמה החדשה חייבת להכיל לפחות 6 תווים')
+];
+
+router.post('/reset-password', csrfProtection, validateResetPassword, resetPassword);
+router.post('/forgot-password', csrfProtection, validateForgotPassword, forgotPassword);
+const validateTwoFactor: ValidationChain[] = [
+  body('userId').notEmpty().withMessage('מזהה משתמש הוא שדה חובה'),
+  body('token').notEmpty().withMessage('טוקן הוא שדה חובה')
+];
+
+const validateGoogleAuth: ValidationChain[] = [
+  body('token').notEmpty().withMessage('טוקן Google הוא שדה חובה')
+];
+
+// Routes
+router.put('/update-profile', csrfProtection, validateUpdateProfile, updateUserProfile);
+router.delete('/delete-account', csrfProtection, deleteUserAccount);
+router.get('/csrf-token', csrfProtection, getCsrfToken);
+
+router.post('/register', csrfProtection, validateRegistration, registerUser);
+
+router.post('/login', csrfProtection, validateLogin, loginUser);
+
+router.post('/verify-two-factor', csrfProtection, validateTwoFactor, verifyTwoFactor);
+
+router.post('/google', csrfProtection, validateGoogleAuth, googleAuth);
+router.post('/logout', csrfProtection, logoutUser);
+export default router;
+
+==================================================
+Contents of C:\Users\eytan\Desktop\hebrewclubweb\server\src\routes\courseRoutes.ts:
+==================================================
+import express from 'express';
+import { getCourses, getCourseById } from '../controllers/courseController';
+import { authenticateToken  } from '../middleware/authMiddleware';
+
+const router = express.Router();
+
+router.get('/', authenticateToken , getCourses);
+router.get('/:id', authenticateToken , getCourseById);
+
+// Add more routes for creating, updating, and deleting courses
+
+export default router;
+
+==================================================
+Contents of C:\Users\eytan\Desktop\hebrewclubweb\server\src\routes\gradeRoutes.ts:
+==================================================
+import express from 'express';
+import { getGrades, addGrade } from '../controllers/gradeController';
+import { authenticateToken } from '../middleware/authMiddleware';
+
+const router = express.Router();
+
+router.get('/', authenticateToken, getGrades);
+router.post('/', authenticateToken, addGrade);
+
+// Add more routes as needed
+
+export default router;
+
+==================================================
+Contents of C:\Users\eytan\Desktop\hebrewclubweb\server\src\routes\leadRoutes.ts:
+==================================================
+import express from 'express';
+import { createLead } from '../controllers/leadController';
+
+const router = express.Router();
+
+router.post('/create', createLead);
+
+export default router;
+
+==================================================
+Contents of C:\Users\eytan\Desktop\hebrewclubweb\server\src\routes\messageRoutes.ts:
+==================================================
+import express from 'express';
+import { getMessages, sendMessage } from '../controllers/messageController';
+
+const router = express.Router();
+
+router.get('/', getMessages);
+router.post('/', sendMessage);
+
+export default router;
+
+==================================================
+Contents of C:\Users\eytan\Desktop\hebrewclubweb\server\src\routes\paymentRoutes.ts:
+==================================================
+import express from 'express';
+import { getPayments, makePayment } from '../controllers/paymentController';
+
+const router = express.Router();
+
+router.get('/', getPayments);
+router.post('/', makePayment);
+
+export default router;
+
+==================================================
+Contents of C:\Users\eytan\Desktop\hebrewclubweb\server\src\routes\personalAreaRoutes.ts:
+==================================================
+import express from 'express';
+import { getProfile, updateProfile, getCourses, getAssignments, getGrades } from '../controllers/personalAreaController';
+
+const router = express.Router();
+
+router.get('/profile', getProfile);
+router.put('/profile', updateProfile);
+router.get('/courses', getCourses);
+router.get('/assignments', getAssignments);
+router.get('/grades', getGrades);
+
+export default router;
+
+==================================================
+Contents of C:\Users\eytan\Desktop\hebrewclubweb\server\src\types\types.ts:
+==================================================
+// src/types/types.ts
+
+export interface User {
+    id: string;
+    name: string;
+    email: string;
+    username?: string;
+  }
+  
+  export interface Profile {
+    name: string;
+    email: string;
+    username?: string;
+    phoneNumber?: string;
+    profilePicture?: string;
+  }
+  
+  export interface Course {
+    id: string;
+    name: string;
+    description: string;
+    instructor: string;
+    startDate: Date;
+    endDate: Date;
+    level: 'beginner' | 'intermediate' | 'advanced';
+    enrolledStudents?: number;
+  }
+  
+  export interface Assignment {
+    id: string;
+    courseId: string;
+    title: string;
+    description: string;
+    dueDate: Date;
+    maxScore: number;
+  }
+  
+  export interface Grade {
+    id: string;
+    userId: string;
+    courseId: string;
+    assignmentId: string;
+    score: number;
+    feedback?: string;
+    submissionDate: Date;
+  }
+  
+  export interface AppError {
+    code: string;
+    message: string;
+    details?: any;
+  }
+  
+  export interface LoginCredentials {
+    username: string;
+    password: string;
+  }
+  
+  export interface RegisterData extends LoginCredentials {
+    name: string;
+    email: string;
+  }
+  
+  export interface AuthResponse {
+    user: User;
+    token: string;
+  }
+  
+  export interface PaginationParams {
+    page: number;
+    limit: number;
+  }
+  
+  export interface ApiResponse<T> {
+    data: T;
+    message?: string;
+    pagination?: {
+      total: number;
+      page: number;
+      limit: number;
+    };
+  }
+  
+  export type SortOrder = 'asc' | 'desc';
+  
+  export interface SortParams {
+    field: string;
+    order: SortOrder;
+  }
+  
+  export interface FilterParams {
+    [key: string]: string | number | boolean | Date;
+  }
+  
+  export interface SearchParams {
+    query: string;
+    fields: string[];
+  }
+  
+  export type Language = 'he' | 'en';
+  
+  export interface ThemeOptions {
+    mode: 'light' | 'dark';
+    primary: string;
+    secondary: string;
+  }
+
+==================================================
+Contents of C:\Users\eytan\Desktop\hebrewclubweb\server\src\utils\emailService.ts:
+==================================================
+import nodemailer from 'nodemailer';
+
+// יצירת טרנספורטר של nodemailer
+const transporter = nodemailer.createTransport({
+  host: process.env.EMAIL_HOST,
+  port: parseInt(process.env.EMAIL_PORT || '587'),
+  secure: process.env.EMAIL_SECURE === 'true',
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS,
+  },
+});
+
+export const sendResetPasswordEmail = async (to: string, resetToken: string) => {
+  const resetUrl = `${process.env.CLIENT_URL}/reset-password?token=${resetToken}`;
+
+  const mailOptions = {
+    from: process.env.EMAIL_FROM,
+    to: to,
+    subject: 'איפוס סיסמה',
+    html: `
+      <h1>בקשה לאיפוס סיסמה</h1>
+      <p>קיבלנו בקשה לאיפוס הסיסמה שלך. אם לא ביקשת זאת, אנא התעלם מהודעה זו.</p>
+      <p>לאיפוס הסיסמה, אנא לחץ על הקישור הבא:</p>
+      <a href="${resetUrl}">איפוס סיסמה</a>
+      <p>הקישור יהיה בתוקף למשך שעה אחת.</p>
+    `
+  };
+
+  try {
+    await transporter.sendMail(mailOptions);
+    console.log('אימייל לאיפוס סיסמה נשלח בהצלחה');
+  } catch (error) {
+    console.error('שגיאה בשליחת אימייל לאיפוס סיסמה:', error);
+    throw new Error('שגיאה בשליחת אימייל לאיפוס סיסמה');
+  }
+};
+
+
+==================================================
+Contents of C:\Users\eytan\Desktop\hebrewclubweb\server\src\package-lock.json:
+==================================================
+{
+  "name": "src",
+  "lockfileVersion": 3,
+  "requires": true,
+  "packages": {
+    "": {
+      "dependencies": {
+        "express-validator": "^7.1.0"
+      },
+      "devDependencies": {
+        "@types/express-validator": "^2.20.33"
+      }
+    },
+    "node_modules/@types/body-parser": {
+      "version": "1.19.5",
+      "resolved": "https://registry.npmjs.org/@types/body-parser/-/body-parser-1.19.5.tgz",
+      "integrity": "sha512-fB3Zu92ucau0iQ0JMCFQE7b/dv8Ot07NI3KaZIkIUNXq82k4eBAqUaneXfleGY9JWskeS9y+u0nXMyspcuQrCg==",
+      "dev": true,
+      "license": "MIT",
+      "dependencies": {
+        "@types/connect": "*",
+        "@types/node": "*"
+      }
+    },
+    "node_modules/@types/connect": {
+      "version": "3.4.38",
+      "resolved": "https://registry.npmjs.org/@types/connect/-/connect-3.4.38.tgz",
+      "integrity": "sha512-K6uROf1LD88uDQqJCktA4yzL1YYAK6NgfsI0v/mTgyPKWsX1CnJ0XPSDhViejru1GcRkLWb8RlzFYJRqGUbaug==",
+      "dev": true,
+      "license": "MIT",
+      "dependencies": {
+        "@types/node": "*"
+      }
+    },
+    "node_modules/@types/express": {
+      "version": "4.17.21",
+      "resolved": "https://registry.npmjs.org/@types/express/-/express-4.17.21.tgz",
+      "integrity": "sha512-ejlPM315qwLpaQlQDTjPdsUFSc6ZsP4AN6AlWnogPjQ7CVi7PYF3YVz+CY3jE2pwYf7E/7HlDAN0rV2GxTG0HQ==",
+      "dev": true,
+      "license": "MIT",
+      "dependencies": {
+        "@types/body-parser": "*",
+        "@types/express-serve-static-core": "^4.17.33",
+        "@types/qs": "*",
+        "@types/serve-static": "*"
+      }
+    },
+    "node_modules/@types/express-serve-static-core": {
+      "version": "4.19.5",
+      "resolved": "https://registry.npmjs.org/@types/express-serve-static-core/-/express-serve-static-core-4.19.5.tgz",
+      "integrity": "sha512-y6W03tvrACO72aijJ5uF02FRq5cgDR9lUxddQ8vyF+GvmjJQqbzDcJngEjURc+ZsG31VI3hODNZJ2URj86pzmg==",
+      "dev": true,
+      "license": "MIT",
+      "dependencies": {
+        "@types/node": "*",
+        "@types/qs": "*",
+        "@types/range-parser": "*",
+        "@types/send": "*"
+      }
+    },
+    "node_modules/@types/express-validator": {
+      "version": "2.20.33",
+      "resolved": "https://registry.npmjs.org/@types/express-validator/-/express-validator-2.20.33.tgz",
+      "integrity": "sha512-dAlxnuNhKkM/Xq2148NySrnutOSeK8Xk6rpDdDrNT5akAKqFbtLmMKENaMYYh4xWcSqtSWc5l+TLxnZosa9p/g==",
+      "dev": true,
+      "license": "MIT",
+      "dependencies": {
+        "@types/express": "*"
+      }
+    },
+    "node_modules/@types/http-errors": {
+      "version": "2.0.4",
+      "resolved": "https://registry.npmjs.org/@types/http-errors/-/http-errors-2.0.4.tgz",
+      "integrity": "sha512-D0CFMMtydbJAegzOyHjtiKPLlvnm3iTZyZRSZoLq2mRhDdmLfIWOCYPfQJ4cu2erKghU++QvjcUjp/5h7hESpA==",
+      "dev": true,
+      "license": "MIT"
+    },
+    "node_modules/@types/mime": {
+      "version": "1.3.5",
+      "resolved": "https://registry.npmjs.org/@types/mime/-/mime-1.3.5.tgz",
+      "integrity": "sha512-/pyBZWSLD2n0dcHE3hq8s8ZvcETHtEuF+3E7XVt0Ig2nvsVQXdghHVcEkIWjy9A0wKfTn97a/PSDYohKIlnP/w==",
+      "dev": true,
+      "license": "MIT"
+    },
+    "node_modules/@types/node": {
+      "version": "22.0.2",
+      "resolved": "https://registry.npmjs.org/@types/node/-/node-22.0.2.tgz",
+      "integrity": "sha512-yPL6DyFwY5PiMVEwymNeqUTKsDczQBJ/5T7W/46RwLU/VH+AA8aT5TZkvBviLKLbbm0hlfftEkGrNzfRk/fofQ==",
+      "dev": true,
+      "license": "MIT",
+      "dependencies": {
+        "undici-types": "~6.11.1"
+      }
+    },
+    "node_modules/@types/qs": {
+      "version": "6.9.15",
+      "resolved": "https://registry.npmjs.org/@types/qs/-/qs-6.9.15.tgz",
+      "integrity": "sha512-uXHQKES6DQKKCLh441Xv/dwxOq1TVS3JPUMlEqoEglvlhR6Mxnlew/Xq/LRVHpLyk7iK3zODe1qYHIMltO7XGg==",
+      "dev": true,
+      "license": "MIT"
+    },
+    "node_modules/@types/range-parser": {
+      "version": "1.2.7",
+      "resolved": "https://registry.npmjs.org/@types/range-parser/-/range-parser-1.2.7.tgz",
+      "integrity": "sha512-hKormJbkJqzQGhziax5PItDUTMAM9uE2XXQmM37dyd4hVM+5aVl7oVxMVUiVQn2oCQFN/LKCZdvSM0pFRqbSmQ==",
+      "dev": true,
+      "license": "MIT"
+    },
+    "node_modules/@types/send": {
+      "version": "0.17.4",
+      "resolved": "https://registry.npmjs.org/@types/send/-/send-0.17.4.tgz",
+      "integrity": "sha512-x2EM6TJOybec7c52BX0ZspPodMsQUd5L6PRwOunVyVUhXiBSKf3AezDL8Dgvgt5o0UfKNfuA0eMLr2wLT4AiBA==",
+      "dev": true,
+      "license": "MIT",
+      "dependencies": {
+        "@types/mime": "^1",
+        "@types/node": "*"
+      }
+    },
+    "node_modules/@types/serve-static": {
+      "version": "1.15.7",
+      "resolved": "https://registry.npmjs.org/@types/serve-static/-/serve-static-1.15.7.tgz",
+      "integrity": "sha512-W8Ym+h8nhuRwaKPaDw34QUkwsGi6Rc4yYqvKFo5rm2FUEhCFbzVWrxXUxuKK8TASjWsysJY0nsmNCGhCOIsrOw==",
+      "dev": true,
+      "license": "MIT",
+      "dependencies": {
+        "@types/http-errors": "*",
+        "@types/node": "*",
+        "@types/send": "*"
+      }
+    },
+    "node_modules/express-validator": {
+      "version": "7.1.0",
+      "resolved": "https://registry.npmjs.org/express-validator/-/express-validator-7.1.0.tgz",
+      "integrity": "sha512-ePn6NXjHRZiZkwTiU1Rl2hy6aUqmi6Cb4/s8sfUsKH7j2yYl9azSpl8xEHcOj1grzzQ+UBEoLWtE1s6FDxW++g==",
+      "license": "MIT",
+      "dependencies": {
+        "lodash": "^4.17.21",
+        "validator": "~13.12.0"
+      },
+      "engines": {
+        "node": ">= 8.0.0"
+      }
+    },
+    "node_modules/lodash": {
+      "version": "4.17.21",
+      "resolved": "https://registry.npmjs.org/lodash/-/lodash-4.17.21.tgz",
+      "integrity": "sha512-v2kDEe57lecTulaDIuNTPy3Ry4gLGJ6Z1O3vE1krgXZNrsQ+LFTGHVxVjcXPs17LhbZVGedAJv8XZ1tvj5FvSg==",
+      "license": "MIT"
+    },
+    "node_modules/undici-types": {
+      "version": "6.11.1",
+      "resolved": "https://registry.npmjs.org/undici-types/-/undici-types-6.11.1.tgz",
+      "integrity": "sha512-mIDEX2ek50x0OlRgxryxsenE5XaQD4on5U2inY7RApK3SOJpofyw7uW2AyfMKkhAxXIceo2DeWGVGwyvng1GNQ==",
+      "dev": true,
+      "license": "MIT"
+    },
+    "node_modules/validator": {
+      "version": "13.12.0",
+      "resolved": "https://registry.npmjs.org/validator/-/validator-13.12.0.tgz",
+      "integrity": "sha512-c1Q0mCiPlgdTVVVIJIrBuxNicYE+t/7oKeI9MWLj3fh/uq2Pxh/3eeWbVZ4OcGW1TUf53At0njHw5SMdA3tmMg==",
+      "license": "MIT",
+      "engines": {
+        "node": ">= 0.10"
+      }
+    }
+  }
+}
+
+
+==================================================
+Contents of C:\Users\eytan\Desktop\hebrewclubweb\server\src\package.json:
+==================================================
+{
+  "dependencies": {
+    "express-validator": "^7.1.0"
+  },
+  "devDependencies": {
+    "@types/express-validator": "^2.20.33"
+  }
+}
+
+
+==================================================
+Contents of C:\Users\eytan\Desktop\hebrewclubweb\server\src\validations.ts:
+==================================================
+// src/validations.ts
+
+import { body, ValidationChain } from 'express-validator';
+
+export const validateLogin: ValidationChain[] = [
+  body('username')
+    .notEmpty()
+    .withMessage('שם משתמש או אימייל נדרש')
+    .isLength({ max: 100 })
+    .withMessage('שם משתמש או אימייל חייב להיות עד 100 תווים'),
+  body('password')
+    .notEmpty()
+    .withMessage('סיסמה נדרשת')
+    .isLength({ min: 8, max: 100 })
+    .withMessage('הסיסמה חייבת להיות בין 8 ל-100 תווים')
+    .trim(),
+];
+
+export const validateRegistration: ValidationChain[] = [
+  body('name')
+    .notEmpty().withMessage('שם נדרש')
+    .isLength({ min: 2, max: 50 }).withMessage('השם חייב להיות בין 2 ל-50 תווים')
+    .trim().escape(),
+  body('username')
+    .notEmpty().withMessage('שם משתמש נדרש')
+    .isLength({ min: 3, max: 20 }).withMessage('שם המשתמש חייב להיות בין 3 ל-20 תווים')
+    .matches(/^[a-zA-Z0-9_]+$/).withMessage('שם המשתמש יכול להכיל רק אותיות, מספרים וקו תחתון')
+    .trim(),
+  body('email')
+    .isEmail().withMessage('כתובת אימייל לא תקינה')
+    .normalizeEmail()
+    .isLength({ max: 100 }).withMessage('כתובת האימייל חייבת להיות עד 100 תווים'),
+  body('password')
+    .isLength({ min: 8, max: 100 }).withMessage('הסיסמה חייבת להיות בין 8 ל-100 תווים')
+    .matches(/^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[^a-zA-Z0-9]).{8,}$/, "i")
+    .withMessage('הסיסמה חייבת לכלול אות קטנה, אות גדולה, מספר ותו מיוחד')
+    .trim(),
+];
+
+export const validateForgotPassword: ValidationChain[] = [
+  body('email')
+    .isEmail()
+    .withMessage('כתובת אימייל לא תקינה')
+    .normalizeEmail()
+    .isLength({ max: 100 })
+    .withMessage('כתובת האימייל חייבת להיות עד 100 תווים'),
+];
+
+export const validateResetPassword: ValidationChain[] = [
+  body('password')
+    .isLength({ min: 8, max: 100 })
+    .withMessage('הסיסמה חייבת להיות בין 8 ל-100 תווים')
+    .matches(/^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[^a-zA-Z0-9]).{8,}$/, "i")
+    .withMessage('הסיסמה חייבת לכלול אות קטנה, אות גדולה, מספר ותו מיוחד')
+    .trim(),
+];
+
+export const validateChangePassword: ValidationChain[] = [
+  body('currentPassword')
+    .notEmpty()
+    .withMessage('הסיסמה הנוכחית נדרשת')
+    .trim(),
+  body('newPassword')
+    .isLength({ min: 8, max: 100 })
+    .withMessage('הסיסמה החדשה חייבת להיות בין 8 ל-100 תווים')
+    .matches(/^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[^a-zA-Z0-9]).{8,}$/, "i")
+    .withMessage('הסיסמה החדשה חייבת לכלול אות קטנה, אות גדולה, מספר ותו מיוחד')
+    .trim(),
+];
+
+export const validateUpdateProfile: ValidationChain[] = [
+  body('name')
+    .optional()
+    .isLength({ max: 50 })
+    .withMessage('השם חייב להיות עד 50 תווים')
+    .trim()
+    .escape(),
+  body('email')
+    .optional()
+    .isEmail()
+    .withMessage('כתובת אימייל לא תקינה')
+    .normalizeEmail()
+    .isLength({ max: 100 })
+    .withMessage('כתובת האימייל חייבת להיות עד 100 תווים'),
+];
+
+export const validateTwoFactorSetup: ValidationChain[] = [
+  body('secret')
+    .notEmpty()
+    .withMessage('סוד האימות הדו-שלבי נדרש'),
+  body('token')
+    .notEmpty()
+    .withMessage('קוד האימות נדרש')
+    .isLength({ min: 6, max: 6 })
+    .withMessage('קוד האימות חייב להיות באורך 6 ספרות'),
+];
+
+export const validateTwoFactorVerify: ValidationChain[] = [
+  body('userId')
+    .notEmpty()
+    .withMessage('מזהה המשתמש נדרש'),
+  body('token')
+    .notEmpty()
+    .withMessage('קוד האימות נדרש')
+    .isLength({ min: 6, max: 6 })
+    .withMessage('קוד האימות חייב להיות באורך 6 ספרות'),
+];
+
+export const validateGoogleAuth: ValidationChain[] = [
+  body('token')
+    .notEmpty()
+    .withMessage('טוקן Google נדרש'),
+];
+
+==================================================
+Contents of C:\Users\eytan\Desktop\hebrewclubweb\server\src\admin\Controller\adminCourseController.ts:
+==================================================
+import { Request, Response } from 'express';
+import Course from '../models/Course';
+
+export const getCourseManagementData = async (req: Request, res: Response) => {
+  try {
+    const courses = await Course.find();
+    res.json(courses);
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching course data', error });
+  }
+};
+
+export const createCourse = async (req: Request, res: Response) => {
+  // Implementation for creating a new course
+};
+
+export const updateCourse = async (req: Request, res: Response) => {
+  // Implementation for updating a course
+};
+
+export const deleteCourse = async (req: Request, res: Response) => {
+  // Implementation for deleting a course
+};
+
+==================================================
+Contents of C:\Users\eytan\Desktop\hebrewclubweb\server\src\admin\Controller\adminGradeController.ts:
+==================================================
+import { Request, Response } from 'express';
+import Grade from '../models/Grade';
+
+export const getGradeManagementData = async (req: Request, res: Response) => {
+  try {
+    const grades = await Grade.find();
+    res.json(grades);
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching grade data', error });
+  }
+};
+
+export const createGrade = async (req: Request, res: Response) => {
+  // Implementation for creating a new grade
+};
+
+export const updateGrade = async (req: Request, res: Response) => {
+  // Implementation for updating a grade
+};
+
+export const deleteGrade = async (req: Request, res: Response) => {
+  // Implementation for deleting a grade
+};
+
+==================================================
+Contents of C:\Users\eytan\Desktop\hebrewclubweb\server\src\admin\Controller\adminLeadController.ts:
+==================================================
+import { Request, Response } from 'express';
+import Lead from '../models/Lead';
+
+export const getLeadManagementData = async (req: Request, res: Response) => {
+  try {
+    const leads = await Lead.find();
+    res.json(leads);
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching lead data', error });
+  }
+};
+
+export const createLead = async (req: Request, res: Response) => {
+  // Implementation for creating a new lead
+};
+
+export const updateLead = async (req: Request, res: Response) => {
+  // Implementation for updating a lead
+};
+
+export const deleteLead = async (req: Request, res: Response) => {
+  // Implementation for deleting a lead
+};
+
+==================================================
+Contents of C:\Users\eytan\Desktop\hebrewclubweb\server\src\admin\Controller\adminMessageController.ts:
+==================================================
+import { Request, Response } from 'express';
+import Message from '../models/Message';
+
+export const getMessageManagementData = async (req: Request, res: Response) => {
+  try {
+    const messages = await Message.find();
+    res.json(messages);
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching message data', error });
+  }
+};
+
+export const sendAdminMessage = async (req: Request, res: Response) => {
+  // Implementation for sending an admin message
+};
+
+export const deleteMessage = async (req: Request, res: Response) => {
+  // Implementation for deleting a message
+};
+
+==================================================
+Contents of C:\Users\eytan\Desktop\hebrewclubweb\server\src\admin\Controller\adminPaymentController.ts:
+==================================================
+import { Request, Response } from 'express';
+import Payment from '../models/Payment';
+
+export const getPaymentManagementData = async (req: Request, res: Response) => {
+  try {
+    const payments = await Payment.find();
+    res.json(payments);
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching payment data', error });
+  }
+};
+
+export const processPayment = async (req: Request, res: Response) => {
+  // Implementation for processing a payment
+};
+
+export const refundPayment = async (req: Request, res: Response) => {
+  // Implementation for refunding a payment
+};
+
+==================================================
+Contents of C:\Users\eytan\Desktop\hebrewclubweb\server\src\admin\Controller\adminStatisticsController.ts:
+==================================================
+import { Request, Response } from 'express';
+import User from '../../models/User';
+import Course from '../../models/Course';
+import Payment from '../../models/Payment';
+import Lead from '../../models/Lead';
+
+export const getDashboardStats = async (req: Request, res: Response) => {
+  try {
+    const userCount = await User.countDocuments();
+    const courseCount = await Course.countDocuments({ status: 'active' });
+    const recentPayments = await Payment.find().sort({ createdAt: -1 }).limit(5);
+    const newLeadsCount = await Lead.countDocuments({ createdAt: { $gte: new Date(Date.now() - 30*24*60*60*1000) } });
+
+    res.json({
+      userCount,
+      courseCount,
+      recentPayments,
+      newLeadsCount
+    });
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching dashboard stats', error });
+  }
+};
+
+export const getUserGrowthStats = async (req: Request, res: Response) => {
+  // Implementation for user growth statistics
+};
+
+export const getCoursePopularityStats = async (req: Request, res: Response) => {
+  // Implementation for course popularity statistics
+};
+
+export const getRevenueStats = async (req: Request, res: Response) => {
+  // Implementation for revenue statistics
+};
+
+==================================================
+Contents of C:\Users\eytan\Desktop\hebrewclubweb\server\src\admin\Controller\adminSystemSettingsController.ts:
+==================================================
+import { Request, Response } from 'express';
+import SystemSettings from '../models/SystemSettings';
+
+export const updateSystemSettings = async (req: Request, res: Response) => {
+  try {
+    const { settingKey, settingValue } = req.body;
+    const updatedSetting = await SystemSettings.findOneAndUpdate(
+      { key: settingKey },
+      { value: settingValue },
+      { new: true, upsert: true }
+    );
+    res.json(updatedSetting);
+  } catch (error) {
+    res.status(500).json({ message: 'Error updating system settings', error });
+  }
+};
+
+export const getSystemSettings = async (req: Request, res: Response) => {
+  try {
+    const settings = await SystemSettings.find();
+    res.json(settings);
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching system settings', error });
+  }
+};
+
+==================================================
+Contents of C:\Users\eytan\Desktop\hebrewclubweb\server\src\admin\Controller\adminTaskController.ts:
+==================================================
+import { Request, Response } from 'express';
+import Assignment from '../models/Assignment';
+
+export const getTaskManagementData = async (req: Request, res: Response) => {
+  try {
+    const assignments = await Assignment.find();
+    res.json(assignments);
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching task data', error });
+  }
+};
+
+export const createTask = async (req: Request, res: Response) => {
+  // Implementation for creating a new task
+};
+
+export const updateTask = async (req: Request, res: Response) => {
+  // Implementation for updating a task
+};
+
+export const deleteTask = async (req: Request, res: Response) => {
+  // Implementation for deleting a task
+};
+
+==================================================
+Contents of C:\Users\eytan\Desktop\hebrewclubweb\server\src\admin\Controller\adminUserController.ts:
+==================================================
+import { Request, Response } from 'express';
+import User from '../models/User';
+
+export const getUserManagementData = async (req: Request, res: Response) => {
+  try {
+    const users = await User.find().select('-password');
+    res.json(users);
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching user data', error });
+  }
+};
+
+export const createUser = async (req: Request, res: Response) => {
+  // Implementation for creating a new user
+};
+
+export const updateUser = async (req: Request, res: Response) => {
+  // Implementation for updating a user
+};
+
+export const deleteUser = async (req: Request, res: Response) => {
+  // Implementation for deleting a user
+};
+
+==================================================
+Contents of C:\Users\eytan\Desktop\hebrewclubweb\server\src\admin\models\SystemSettings.ts:
+==================================================
+import mongoose, { Schema, Document } from 'mongoose';
+
+export interface ISystemSettings extends Document {
+  key: string;
+  value: any;
+}
+
+const SystemSettingsSchema: Schema = new Schema({
+  key: { type: String, required: true, unique: true },
+  value: { type: Schema.Types.Mixed, required: true },
+});
+
+export default mongoose.model<ISystemSettings>('SystemSettings', SystemSettingsSchema);
+
+==================================================
+Contents of C:\Users\eytan\Desktop\hebrewclubweb\server\src\admin\routes\adminRoutes.ts:
+==================================================
+import express from 'express';
+import { authenticateToken, roleCheck } from '../../middleware/authMiddleware';
+import * as adminUserController from '../../admin/Controller/adminUserController';
+import * as adminCourseController from '../../admin/Controller/adminCourseController';
+import * as adminTaskController from '../../admin/Controller/adminTaskController';
+import * as adminGradeController from '../../admin/Controller/adminGradeController';
+import * as adminMessageController from '../../admin/Controller/adminMessageController';
+import * as adminPaymentController from '../../admin/Controller/adminPaymentController';
+import * as adminLeadController from '../../admin/Controller/adminLeadController';
+
+const router = express.Router();
+
+// Apply authentication and admin role check to all routes
+router.use(authenticateToken, roleCheck(['admin']));
+
+// User management routes
+router.get('/users', adminUserController.getUserManagementData);
+router.post('/users', adminUserController.createUser);
+router.put('/users/:id', adminUserController.updateUser);
+router.delete('/users/:id', adminUserController.deleteUser);
+
+// Course management routes
+router.get('/courses', adminCourseController.getCourseManagementData);
+router.post('/courses', adminCourseController.createCourse);
+router.put('/courses/:id', adminCourseController.updateCourse);
+router.delete('/courses/:id', adminCourseController.deleteCourse);
+
+// Task management routes
+router.get('/tasks', adminTaskController.getTaskManagementData);
+router.post('/tasks', adminTaskController.createTask);
+router.put('/tasks/:id', adminTaskController.updateTask);
+router.delete('/tasks/:id', adminTaskController.deleteTask);
+
+// Grade management routes
+router.get('/grades', adminGradeController.getGradeManagementData);
+router.post('/grades', adminGradeController.createGrade);
+router.put('/grades/:id', adminGradeController.updateGrade);
+router.delete('/grades/:id', adminGradeController.deleteGrade);
+
+// Message management routes
+router.get('/messages', adminMessageController.getMessageManagementData);
+router.post('/messages', adminMessageController.sendAdminMessage);
+router.delete('/messages/:id', adminMessageController.deleteMessage);
+
+// Payment management routes
+router.get('/payments', adminPaymentController.getPaymentManagementData);
+router.post('/payments/process', adminPaymentController.processPayment);
+router.post('/payments/refund', adminPaymentController.refundPayment);
+
+// Lead management routes
+router.get('/leads', adminLeadController.getLeadManagementData);
+router.post('/leads', adminLeadController.createLead);
+router.put('/leads/:id', adminLeadController.updateLead);
+router.delete('/leads/:id', adminLeadController.deleteLead);
+
+export default router;
+
+==================================================
+Contents of C:\Users\eytan\Desktop\hebrewclubweb\server\src\admin\routes\adminStatisticsRoutes.ts:
+==================================================
+import express from 'express';
+import { authenticateToken, roleCheck } from '../../middleware/authMiddleware';
+import * as adminStatisticsController from '../../admin/Controller/adminStatisticsController';
+
+const router = express.Router();
+
+router.use(authenticateToken, roleCheck(['admin']));
+
+router.get('/dashboard', adminStatisticsController.getDashboardStats);
+router.get('/user-growth', adminStatisticsController.getUserGrowthStats);
+router.get('/course-popularity', adminStatisticsController.getCoursePopularityStats);
+router.get('/revenue', adminStatisticsController.getRevenueStats);
+
+export default router;
+
+==================================================
+Contents of C:\Users\eytan\Desktop\hebrewclubweb\server\src\admin\routes\adminSystemSettingsRoutes.ts:
+==================================================
+import express from 'express';
+import { authenticateToken, roleCheck } from '../../middleware/authMiddleware';
+import * as adminSystemSettingsController from '../../admin/Controller/adminSystemSettingsController';
+
+const router = express.Router();
+
+router.use(authenticateToken, roleCheck(['admin']));
+
+router.put('/', adminSystemSettingsController.updateSystemSettings);
+router.get('/', adminSystemSettingsController.getSystemSettings);
+
+export default router;
+
+==================================================
+Contents of C:\Users\eytan\Desktop\hebrewclubweb\server\src\config\corsConfig.ts:
+==================================================
+import cors from 'cors';
+
+const corsOptions: cors.CorsOptions = {
+  origin: ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:3000', 'http://localhost:5175'],
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-CSRF-Token']
+};
+
+export default corsOptions;
+
+==================================================
+Contents of C:\Users\eytan\Desktop\hebrewclubweb\server\src\config\csrfConfig.ts:
+==================================================
+import csurf from 'csurf';
+
+const csrfProtection = csurf({
+  cookie: true
+});
+
+export default csrfProtection;
+
+==================================================
+Contents of C:\Users\eytan\Desktop\hebrewclubweb\server\src\controllers\assignmentController.ts:
+==================================================
+import { Request, Response } from 'express';
+import Assignment from '../models/Assignment';
+
+export const getAssignments = async (req: Request, res: Response) => {
+  try {
+    const assignments = await Assignment.find({ course: req.params.courseId });
+    res.json(assignments);
+  } catch (error) {
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+export const createAssignment = async (req: Request, res: Response) => {
+  try {
+    const newAssignment = new Assignment(req.body);
+    const savedAssignment = await newAssignment.save();
+    res.status(201).json(savedAssignment);
+  } catch (error) {
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// Add more functions for updating and deleting assignments
+
+==================================================
+Contents of C:\Users\eytan\Desktop\hebrewclubweb\server\src\controllers\courseController.ts:
+==================================================
+import { Request, Response } from 'express';
+import Course from '../models/Course';
+
+export const getCourses = async (req: Request, res: Response) => {
+  try {
+    const courses = await Course.find();
+    res.json(courses);
+  } catch (error) {
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+export const getCourseById = async (req: Request, res: Response) => {
+  try {
+    const course = await Course.findById(req.params.id);
+    if (!course) {
+      return res.status(404).json({ message: 'Course not found' });
+    }
+    res.json(course);
+  } catch (error) {
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// Add more functions for creating, updating, and deleting courses
+
+==================================================
+Contents of C:\Users\eytan\Desktop\hebrewclubweb\server\src\controllers\gradeController.ts:
+==================================================
+import { Request, Response } from 'express';
+import Grade from '../models/Grade';
+
+export const getGrades = async (req: Request, res: Response) => {
+  try {
+    const grades = await Grade.find({ student: req.user.id })
+      .populate('course', 'title')
+      .populate('assignment', 'title');
+    res.json(grades);
+  } catch (error) {
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+export const addGrade = async (req: Request, res: Response) => {
+  try {
+    const newGrade = new Grade({
+      ...req.body,
+      student: req.user.id,
+    });
+    const savedGrade = await newGrade.save();
+    res.status(201).json(savedGrade);
+  } catch (error) {
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// Add more functions as needed
+
+==================================================
+Contents of C:\Users\eytan\Desktop\hebrewclubweb\server\src\controllers\leadController.ts:
+==================================================
+import { Request, Response } from 'express';
+import Lead from '../models/Lead';
+
+export const createLead = async (req: Request, res: Response) => {
+  try {
+    const { name, email } = req.body;
+    const newLead = new Lead({ name, email });
+    await newLead.save();
+    res.status(201).json({ message: 'Lead created successfully', lead: newLead });
+  } catch (error) {
+    res.status(400).json({ message: 'Error creating lead', error });
+  }
+};
+
+==================================================
+Contents of C:\Users\eytan\Desktop\hebrewclubweb\server\src\controllers\messageController.ts:
+==================================================
+import { Request, Response } from 'express';
+import Message from '../models/Message';
+
+export const getMessages = async (req: Request, res: Response) => {
+  try {
+    const messages = await Message.find({ user: req.user!.id }).sort({ createdAt: -1 });
+    res.json(messages);
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching messages', error });
+  }
+};
+
+export const sendMessage = async (req: Request, res: Response) => {
+  try {
+    const { content, recipient } = req.body;
+    const newMessage = new Message({
+      sender: req.user!.id,
+      recipient,
+      content
+    });
+    await newMessage.save();
+    res.status(201).json(newMessage);
+  } catch (error) {
+    res.status(500).json({ message: 'Error sending message', error });
+  }
+};
+
+==================================================
+Contents of C:\Users\eytan\Desktop\hebrewclubweb\server\src\controllers\paymentController.ts:
+==================================================
+import { Request, Response } from 'express';
+import Payment from '../models/Payment';
+
+export const getPayments = async (req: Request, res: Response) => {
+  try {
+    const payments = await Payment.find({ user: req.user!.id }).sort({ createdAt: -1 });
+    res.json(payments);
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching payments', error });
+  }
+};
+
+export const makePayment = async (req: Request, res: Response) => {
+  try {
+    const { amount, description } = req.body;
+    const newPayment = new Payment({
+      user: req.user!.id,
+      amount,
+      description
+    });
+    await newPayment.save();
+    res.status(201).json(newPayment);
+  } catch (error) {
+    res.status(500).json({ message: 'Error making payment', error });
+  }
+};
+
+==================================================
+Contents of C:\Users\eytan\Desktop\hebrewclubweb\server\src\controllers\personalAreaController.ts:
+==================================================
+import { Request, Response } from 'express';
+import User from '../models/User';
+import Course from '../models/Course'; // בהנחה שיש לך מודל Course
+
+export const getProfile = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const userId = req.user?.id;
+    const user = await User.findById(userId).select('-password');
+    if (!user) {
+      res.status(404).json({ message: 'משתמש לא נמצא' });
+      return;
+    }
+    res.json(user);
+  } catch (err) {
+    console.error('שגיאה בטעינת פרופיל המשתמש:', err);
+    res.status(500).json({ message: 'שגיאת שרת' });
+  }
+};
+
+export const getCourses = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const userId = req.user?.id;
+    const courses = await Course.find({ students: userId });
+    res.json(courses);
+  } catch (err) {
+    console.error('שגיאה בטעינת קורסי המשתמש:', err);
+    res.status(500).json({ message: 'שגיאת שרת' });
+  }
+};
+
+export const updateProfile = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const userId = req.user?.id;
+    const updatedUser = await User.findByIdAndUpdate(userId, req.body, { new: true }).select('-password');
+    if (!updatedUser) {
+      res.status(404).json({ message: 'משתמש לא נמצא' });
+      return;
+    }
+    res.json(updatedUser);
+  } catch (err) {
+    console.error('שגיאה בעדכון פרופיל המשתמש:', err);
+    res.status(500).json({ message: 'שגיאת שרת' });
+  }
+};
+
+export const getAssignments = async (req: Request, res: Response): Promise<void> => {
+  // יש להוסיף לוגיקה לטעינת המשימות של המשתמש
+  res.json({ message: 'טעינת משימות המשתמש' });
+};
+
+export const getGrades = async (req: Request, res: Response): Promise<void> => {
+  // יש להוסיף לוגיקה לטעינת הציונים של המשתמש
+  res.json({ message: 'טעינת ציוני המשתמש' });
+};
+
+==================================================
+Contents of C:\Users\eytan\Desktop\hebrewclubweb\server\src\controllers\systemSettingsController.ts:
+==================================================
+import { Request, Response } from 'express';
+import User from '../models/User';
+
+export const updateSystemSettings = async (req: Request, res: Response) => {
+  try {
+    // Implement logic to update system settings
+    // This might involve updating a settings document in the database
+    // or modifying environment variables
+
+    res.json({ message: 'System settings updated successfully' });
+  } catch (error) {
+    res.status(500).json({ message: 'Error updating system settings', error });
+  }
+};
+
+export const getSystemSettings = async (req: Request, res: Response) => {
+  try {
+    // Implement logic to retrieve current system settings
+
+    res.json({ 
+      // Return current system settings
+    });
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching system settings', error });
+  }
+};
+
+==================================================
+Contents of C:\Users\eytan\Desktop\hebrewclubweb\server\src\controllers\userController.ts:
+==================================================
+import { Request, Response } from 'express';
+import User, { IUser } from '../models/User';
+import jwt from 'jsonwebtoken';
+import { validationResult } from 'express-validator';
+import nodemailer from 'nodemailer';
+import speakeasy from 'speakeasy';
+import { OAuth2Client } from 'google-auth-library';
+import UserActionLog from '../models/UserActionLog';
+import crypto from 'crypto';
+const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+const MAX_LOGIN_ATTEMPTS = 5;
+const LOCK_TIME = 2 * 60 * 60 * 1000; // 2 hours
+
+const transporter = nodemailer.createTransport({
+  service: 'gmail',
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS
+  }
+});
+
+export const getCsrfToken = (req: Request, res: Response) => {
+  res.json({ csrfToken: req.csrfToken() });
+};
+
+export const registerUser = async (req: Request, res: Response): Promise<void> => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    res.status(400).json({ errors: errors.array() });
+    return;
+  }
+
+  try {
+    const { name, email, password, username } = req.body;
+
+    // בדיקה אם קיים משתמש עם אותו אימייל
+    let userByEmail = await User.findOne({ email });
+    if (userByEmail) {
+      res.status(400).json({ message: 'כתובת האימייל כבר בשימוש', code: 'EMAIL_EXISTS' });
+      return;
+    }
+
+    // בדיקה אם קיים משתמש עם אותו שם משתמש
+    let userByUsername = await User.findOne({ username });
+    if (userByUsername) {
+      res.status(400).json({ message: 'שם המשתמש כבר בשימוש', code: 'USERNAME_EXISTS' });
+      return;
+    }
+
+    const user = new User({ name, email, password, username });
+    await user.save();
+
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET as string, { expiresIn: '1d' });
+
+    await logUserAction(user._id.toString(), 'הרשמה', `משתמש נרשם עם כתובת האימייל: ${email}`);
+
+    res.json({
+      token,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        username: user.username
+      }
+    });
+  } catch (err) {
+    console.error('שגיאת הרשמה:', err);
+    res.status(500).json({ message: 'שגיאת שרת', code: 'SERVER_ERROR', error: err instanceof Error ? err.message : 'שגיאה לא ידועה' });
+  }
+};
+
+export const loginUser = async (req: Request, res: Response): Promise<void> => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    res.status(400).json({ errors: errors.array() });
+    return;
+  }
+
+  try {
+    const { username, password } = req.body;
+    
+    const user = await User.findOne({
+      $or: [{ email: username }, { username: username }]
+    }) as IUser | null;
+
+    if (!user) {
+      res.status(400).json({ message: 'פרטי התחברות שגויים', code: 'INVALID_CREDENTIALS' });
+      return;
+    }
+
+    if (user.lockUntil && user.lockUntil > Date.now()) {
+      res.status(400).json({ message: 'החשבון נעול. נסה שוב מאוחר יותר', code: 'ACCOUNT_LOCKED' });
+      return;
+    }
+    
+    const isMatch = await user.comparePassword(password);
+    if (!isMatch) {
+      user.failedLoginAttempts = (user.failedLoginAttempts || 0) + 1;
+      if (user.failedLoginAttempts >= MAX_LOGIN_ATTEMPTS) {
+        user.lockUntil = Date.now() + LOCK_TIME;
+      }
+      await user.save();
+      res.status(400).json({ message: 'פרטי התחברות שגויים', code: 'INVALID_CREDENTIALS' });
+      return;
+    }
+    
+    user.failedLoginAttempts = 0;
+    user.lockUntil = undefined;
+    await user.save();
+
+    if (user.twoFactorSecret) {
+      const tempToken = jwt.sign({ id: user._id }, process.env.JWT_SECRET as string, { expiresIn: '5m' });
+      res.json({ requireTwoFactor: true, tempToken });
+      return;
+    }
+    
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET as string, { expiresIn: '1d' });
+    
+    await logUserAction(user._id.toString(), 'התחברות', `משתמש התחבר מכתובת IP: ${req.ip}`);
+
+    res.json({
+      token,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email
+      }
+    });
+  } catch (err) {
+    console.error('שגיאת התחברות:', err);
+    res.status(500).json({ message: 'שגיאת שרת', code: 'SERVER_ERROR', error: err instanceof Error ? err.message : 'שגיאה לא ידועה' });
+  }
+};
+export const forgotPassword = async (req: Request, res: Response): Promise<void> => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    res.status(400).json({ errors: errors.array() });
+    return;
+  }
+
+  try {
+    const { email } = req.body;
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      // We don't want to reveal whether a user exists or not
+      res.json({ message: 'אם המשתמש קיים, נשלח אימייל לאיפוס סיסמה' });
+      return;
+    }
+
+    // Generate a password reset token
+    const resetToken = crypto.randomBytes(20).toString('hex');
+    user.resetPasswordToken = resetToken;
+    user.resetPasswordExpires = Date.now() + 3600000; // 1 hour
+
+    await user.save();
+
+    // Send email with reset link
+    const resetUrl = `${process.env.FRONTEND_URL}/reset-password/${resetToken}`;
+    const mailOptions = {
+      to: user.email,
+      from: process.env.EMAIL_FROM,
+      subject: 'איפוס סיסמה',
+      text: `אתה מקבל את זה כי אתה (או מישהו אחר) ביקש לאפס את הסיסמה שלך.\n\n
+             אנא לחץ על הקישור הבא, או הדבק אותו בדפדפן שלך כדי להשלים את התהליך:\n\n
+             ${resetUrl}\n\n
+             אם לא ביקשת את זה, אנא התעלם מאימייל זה והסיסמה שלך תישאר ללא שינוי.\n`
+    };
+
+    await transporter.sendMail(mailOptions);
+
+    await logUserAction(user._id.toString(), 'בקשת איפוס סיסמה', `נשלח אימייל לאיפוס סיסמה לכתובת: ${email}`);
+
+    res.json({ message: 'אם המשתמש קיים, נשלח אימייל לאיפוס סיסמה' });
+  } catch (err) {
+    console.error('שגיאת איפוס סיסמה:', err);
+    res.status(500).json({ message: 'שגיאת שרת', code: 'SERVER_ERROR', error: err instanceof Error ? err.message : 'שגיאה לא ידועה' });
+  }
+};
+export const resetPassword = async (req: Request, res: Response): Promise<void> => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    res.status(400).json({ errors: errors.array() });
+    return;
+  }
+
+  try {
+    const { token, newPassword } = req.body;
+    const user = await User.findOne({
+      resetPasswordToken: token,
+      resetPasswordExpires: { $gt: Date.now() }
+    });
+
+    if (!user) {
+      res.status(400).json({ message: 'טוקן איפוס סיסמה לא חוקי או פג תוקף', code: 'INVALID_TOKEN' });
+      return;
+    }
+
+    user.password = newPassword;
+    user.resetPasswordToken = undefined;
+    user.resetPasswordExpires = undefined;
+    await user.save();
+
+    await logUserAction(user._id.toString(), 'איפוס סיסמה', `סיסמה אופסה בהצלחה`);
+
+    res.json({ message: 'סיסמה אופסה בהצלחה' });
+  } catch (err) {
+    console.error('שגיאת איפוס סיסמה:', err);
+    res.status(500).json({ message: 'שגיאת שרת', code: 'SERVER_ERROR', error: err instanceof Error ? err.message : 'שגיאה לא ידועה' });
+  }
+};
+export const verifyTwoFactor = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { userId, token } = req.body;
+    const user = await User.findById(userId) as IUser | null;
+    if (!user || !user.twoFactorSecret) {
+      res.status(400).json({ message: 'בקשה לא חוקית', code: 'INVALID_REQUEST' });
+      return;
+    }
+
+    const verified = speakeasy.totp.verify({
+      secret: user.twoFactorSecret,
+      encoding: 'base32',
+      token
+    });
+
+    if (!verified) {
+      res.status(400).json({ message: 'קוד לא חוקי', code: 'INVALID_TOKEN' });
+      return;
+    }
+
+    const jwtToken = jwt.sign({ id: user._id }, process.env.JWT_SECRET as string, { expiresIn: '1d' });
+    
+    await logUserAction(user._id.toString(), 'אימות דו-שלבי', `משתמש השלים אימות דו-שלבי`);
+
+    res.json({ token: jwtToken });
+  } catch (err) {
+    console.error('שגיאת אימות דו-שלבי:', err);
+    res.status(500).json({ message: 'שגיאת שרת', code: 'SERVER_ERROR', error: err instanceof Error ? err.message : 'שגיאה לא ידועה' });
+  }
+};
+
+export const googleAuth = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { token } = req.body;
+    const ticket = await client.verifyIdToken({
+      idToken: token,
+      audience: process.env.GOOGLE_CLIENT_ID
+    });
+    const payload = ticket.getPayload();
+    if (!payload) {
+      res.status(400).json({ message: 'טוקן Google לא חוקי', code: 'INVALID_GOOGLE_TOKEN' });
+      return;
+    }
+    const { email, name, sub: googleId } = payload;
+
+    let user = await User.findOne({ email }) as IUser | null;
+    if (!user) {
+      user = new User({ email, name, googleId });
+      await user.save();
+    } else if (!user.googleId) {
+      user.googleId = googleId;
+      await user.save();
+    }
+
+    const jwtToken = jwt.sign({ id: user._id }, process.env.JWT_SECRET as string, { expiresIn: '1d' });
+    
+    await logUserAction(user._id.toString(), 'אימות Google', `משתמש התחבר באמצעות Google`);
+
+    res.json({
+      token: jwtToken,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email
+      }
+    });
+  } catch (err) {
+    console.error('שגיאת אימות Google:', err);
+    res.status(500).json({ message: 'שגיאת שרת', code: 'SERVER_ERROR', error: err instanceof Error ? err.message : 'שגיאה לא ידועה' });
+  }
+};
+export const logoutUser = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const userId = req.user?.id;
+    if (userId) {
+      await logUserAction(userId, 'התנתקות', `משתמש התנתק מהמערכת`);
+    }
+    
+    // מחיקת ה-token מה-cookie (אם אתה משתמש ב-cookie לאחסון ה-token)
+    res.clearCookie('token');
+    
+    res.json({ message: 'התנתקות בוצעה בהצלחה' });
+  } catch (err) {
+    console.error('שגיאת התנתקות:', err);
+    res.status(500).json({ message: 'שגיאת שרת', code: 'SERVER_ERROR', error: err instanceof Error ? err.message : 'שגיאה לא ידועה' });
+  }
+};
+const logUserAction = async (userId: string, action: string, details: string): Promise<void> => {
+  try {
+    const log = new UserActionLog({ userId, action, details });
+    await log.save();
+  } catch (error) {
+    console.error('שגיאה בתיעוד פעולת משתמש:', error);
+  }
+};
+export const updateUserProfile = async (req: Request, res: Response): Promise<void> => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    res.status(400).json({ errors: errors.array() });
+    return;
+  }
+
+  try {
+    const userId = req.user?.id; // נניח שיש לנו middleware שמוסיף את המשתמש לreq
+    const { name, email } = req.body;
+
+    const user = await User.findById(userId);
+    if (!user) {
+      res.status(404).json({ message: 'משתמש לא נמצא', code: 'USER_NOT_FOUND' });
+      return;
+    }
+
+    if (name) user.name = name;
+    if (email && email !== user.email) {
+      const existingUser = await User.findOne({ email });
+      if (existingUser) {
+        res.status(400).json({ message: 'כתובת האימייל כבר בשימוש', code: 'EMAIL_IN_USE' });
+        return;
+      }
+      user.email = email;
+    }
+
+    await user.save();
+
+    await logUserAction(user._id.toString(), 'עדכון פרופיל', `המשתמש עדכן את פרטי הפרופיל שלו`);
+
+    res.json({
+      message: 'פרטי המשתמש עודכנו בהצלחה',
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email
+      }
+    });
+  } catch (err) {
+    console.error('שגיאה בעדכון פרטי משתמש:', err);
+    res.status(500).json({ message: 'שגיאת שרת', code: 'SERVER_ERROR', error: err instanceof Error ? err.message : 'שגיאה לא ידועה' });
+  }
+};
+
+export const deleteUserAccount = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const userId = req.user?.id; // נניח שיש לנו middleware שמוסיף את המשתמש לreq
+
+    const user = await User.findById(userId);
+    if (!user) {
+      res.status(404).json({ message: 'משתמש לא נמצא', code: 'USER_NOT_FOUND' });
+      return;
+    }
+
+    await User.findByIdAndDelete(userId);
+
+    await logUserAction(userId, 'מחיקת חשבון', `המשתמש מחק את החשבון שלו`);
+
+    res.json({ message: 'החשבון נמחק בהצלחה' });
+  } catch (err) {
+    console.error('שגיאה במחיקת חשבון משתמש:', err);
+    res.status(500).json({ message: 'שגיאת שרת', code: 'SERVER_ERROR', error: err instanceof Error ? err.message : 'שגיאה לא ידועה' });
+  }
+};
+export default {
+  registerUser,
+  loginUser,
+  verifyTwoFactor,
+  getCsrfToken,
+  googleAuth,
+  forgotPassword,
+  resetPassword,
+  updateUserProfile,
+  deleteUserAccount,
+};
+
+==================================================
+Contents of C:\Users\eytan\Desktop\hebrewclubweb\server\src\middleware\authMiddleware.ts:
+==================================================
+import { Request, Response, NextFunction } from 'express';
+import jwt from 'jsonwebtoken';
+import User, { IUser } from '../models/User';
+
+declare global {
+  namespace Express {
+    interface Request {
+      user?: IUser;
+    }
+  }
+}
+
+export const authenticateToken = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const token = req.header('Authorization')?.replace('Bearer ', '');
+
+    if (!token) {
+      res.status(401).json({ message: 'נא להתחבר', code: 'AUTHENTICATION_REQUIRED' });
+      return;
+    }
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as { id: string };
+    const user = await User.findById(decoded.id) as IUser | null;
+
+    if (!user) {
+      res.status(401).json({ message: 'נא להתחבר', code: 'AUTHENTICATION_REQUIRED' });
+      return;
+    }
+
+    req.user = user;
+    next();
+  } catch (error) {
+    console.error('שגיאת אימות:', error);
+    res.status(401).json({ message: 'נא להתחבר', code: 'AUTHENTICATION_REQUIRED' });
+  }
+};
+
+export const roleCheck = (roles: string[]) => {
+  return (req: Request, res: Response, next: NextFunction): void => {
+    if (!req.user) {
+      res.status(401).json({ message: 'נא להתחבר', code: 'AUTHENTICATION_REQUIRED' });
+      return;
+    }
+    if (!roles.includes(req.user.role)) {
+      res.status(403).json({ message: 'גישה נדחתה', code: 'ACCESS_DENIED' });
+      return;
+    }
+    next();
+  };
+};
+
+export const csrfProtection = (req: Request, res: Response, next: NextFunction): void => {
+  const csrfToken = req.header('X-CSRF-Token');
+  if (!csrfToken || csrfToken !== req.csrfToken()) {
+    res.status(403).json({ message: 'אסימון CSRF לא חוקי', code: 'INVALID_CSRF_TOKEN' });
+    return;
+  }
+  next();
+};
+
+==================================================
+Contents of C:\Users\eytan\Desktop\hebrewclubweb\server\src\middleware\csrfProtection.ts:
+==================================================
+import csurf from 'csurf';
+
+export const csrfProtection = csurf({
+  cookie: {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax'
+  }
+});
+
+==================================================
+Contents of C:\Users\eytan\Desktop\hebrewclubweb\server\src\middleware\errorHandler.ts:
+==================================================
+import { Request, Response, NextFunction } from 'express';
+
+export const errorHandler = (err: any, req: Request, res: Response, next: NextFunction) => {
+  console.error(err.stack);
+  
+  const statusCode = err.statusCode || 500;
+  const message = err.message || 'An unexpected error occurred';
+  
+  res.status(statusCode).json({
+    status: 'error',
+    statusCode,
+    message
+  });
+};
+
+==================================================
+Contents of C:\Users\eytan\Desktop\hebrewclubweb\server\src\middleware\logger.ts:
+==================================================
+import { Request, Response, NextFunction } from 'express';
+
+export const logger = (req: Request, res: Response, next: NextFunction) => {
+  console.log(`${new Date().toISOString()} - ${req.method} ${req.url}`);
+  next();
+};
+
+==================================================
+Contents of C:\Users\eytan\Desktop\hebrewclubweb\server\src\models\Assignment.ts:
+==================================================
+import mongoose, { Schema, Document } from 'mongoose';
+
+export interface IAssignment extends Document {
+  title: string;
+  description: string;
+  course: string;
+  dueDate: Date;
+  points: number;
+}
+
+const AssignmentSchema: Schema = new Schema({
+  title: { type: String, required: true },
+  description: { type: String, required: true },
+  course: { type: Schema.Types.ObjectId, ref: 'Course', required: true },
+  dueDate: { type: Date, required: true },
+  points: { type: Number, required: true },
+});
+
+export default mongoose.model<IAssignment>('Assignment', AssignmentSchema);
+
+==================================================
+Contents of C:\Users\eytan\Desktop\hebrewclubweb\server\src\models\Course.ts:
+==================================================
+import mongoose, { Schema, Document } from 'mongoose';
+
+export interface ICourse extends Document {
+  title: string;
+  description: string;
+  instructor: string;
+  duration: number;
+  level: 'beginner' | 'intermediate' | 'advanced';
+  students: string[];
+}
+
+const CourseSchema: Schema = new Schema({
+  title: { type: String, required: true },
+  description: { type: String, required: true },
+  instructor: { type: String, required: true },
+  duration: { type: Number, required: true },
+  level: { type: String, enum: ['beginner', 'intermediate', 'advanced'], required: true },
+  students: [{ type: Schema.Types.ObjectId, ref: 'User' }],
+});
+
+export default mongoose.model<ICourse>('Course', CourseSchema);
+
+==================================================
+Contents of C:\Users\eytan\Desktop\hebrewclubweb\server\src\models\Grade.ts:
+==================================================
+import mongoose, { Schema, Document } from 'mongoose';
+
+export interface IGrade extends Document {
+  student: string;
+  course: string;
+  assignment: string;
+  score: number;
+  maxScore: number;
+  date: Date;
+}
+
+const GradeSchema: Schema = new Schema({
+  student: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+  course: { type: Schema.Types.ObjectId, ref: 'Course', required: true },
+  assignment: { type: Schema.Types.ObjectId, ref: 'Assignment', required: true },
+  score: { type: Number, required: true },
+  maxScore: { type: Number, required: true },
+  date: { type: Date, default: Date.now },
+});
+
+export default mongoose.model<IGrade>('Grade', GradeSchema);
+
+==================================================
+Contents of C:\Users\eytan\Desktop\hebrewclubweb\server\src\models\Lead.ts:
+==================================================
+import mongoose, { Schema, Document } from 'mongoose';
+
+export interface ILead extends Document {
+  name: string;
+  email: string;
+  createdAt: Date;
+}
+
+const LeadSchema: Schema = new Schema({
+  name: { type: String, required: true },
+  email: { type: String, required: true, unique: true },
+  createdAt: { type: Date, default: Date.now },
+});
+
+export default mongoose.model<ILead>('Lead', LeadSchema);
+
+==================================================
+Contents of C:\Users\eytan\Desktop\hebrewclubweb\server\src\models\Message.ts:
+==================================================
+import mongoose, { Schema, Document } from 'mongoose';
+
+export interface IMessage extends Document {
+  sender: string;
+  recipient: string;
+  content: string;
+  createdAt: Date;
+}
+
+const MessageSchema: Schema = new Schema({
+  sender: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+  recipient: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+  content: { type: String, required: true },
+  createdAt: { type: Date, default: Date.now }
+});
+
+export default mongoose.model<IMessage>('Message', MessageSchema);
+
+==================================================
+Contents of C:\Users\eytan\Desktop\hebrewclubweb\server\src\models\Payment.ts:
+==================================================
+import mongoose, { Schema, Document } from 'mongoose';
+
+export interface IPayment extends Document {
+  user: string;
+  amount: number;
+  description: string;
+  createdAt: Date;
+}
+
+const PaymentSchema: Schema = new Schema({
+  user: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+  amount: { type: Number, required: true },
+  description: { type: String, required: true },
+  createdAt: { type: Date, default: Date.now }
+});
+
+export default mongoose.model<IPayment>('Payment', PaymentSchema);
+
+==================================================
+Contents of C:\Users\eytan\Desktop\hebrewclubweb\server\src\models\User.ts:
+==================================================
+import mongoose, { Schema, Document } from 'mongoose';
+import bcrypt from 'bcryptjs';
+
+export interface IUser extends Document {
+  name: string;
+  username: string; // הוספנו שדה username
+  email: string;
+  password: string;
+  role: string;
+  failedLoginAttempts: number;
+  lockUntil: number | undefined;
+  twoFactorSecret: string | undefined;
+  resetPasswordToken: string | undefined;
+  resetPasswordExpires: number | undefined;
+  googleId?: string;
+  facebookId?: string;
+  emailVerificationToken?: string;
+  isEmailVerified: boolean;
+  jwtSecret?: string;
+  comparePassword(candidatePassword: string): Promise<boolean>;
+}
+
+const UserSchema: Schema = new Schema({
+  name: { type: String, required: true },
+  username: { type: String, required: true, unique: true },
+  email: { type: String, required: true, unique: true },
+  password: { type: String, required: true },
+  role: { type: String, default: 'user' },
+  failedLoginAttempts: { type: Number, default: 0 },
+  lockUntil: { type: Number },
+  twoFactorSecret: { type: String },
+  resetPasswordToken: { type: String },
+  resetPasswordExpires: { type: Number },
+  googleId: { type: String },
+  facebookId: { type: String },
+  emailVerificationToken: { type: String },
+  isEmailVerified: { type: Boolean, default: false },
+  jwtSecret: { type: String }
+});
+
+UserSchema.pre<IUser>('save', async function(next) {
+  if (!this.isModified('password')) return next();
+  
+  const salt = await bcrypt.genSalt(10);
+  this.password = await bcrypt.hash(this.password, salt);
+  next();
+});
+
+UserSchema.methods.comparePassword = async function(candidatePassword: string): Promise<boolean> {
+  return bcrypt.compare(candidatePassword, this.password);
+};
+
+export default mongoose.model<IUser>('User', UserSchema);
+
+==================================================
+Contents of C:\Users\eytan\Desktop\hebrewclubweb\server\src\models\UserActionLog.ts:
+==================================================
+import mongoose, { Document, Schema } from 'mongoose';
+
+export interface IUserActionLog extends Document {
+  userId: mongoose.Types.ObjectId;
+  action: string;
+  details: string;
+  createdAt: Date;
+}
+
+const UserActionLogSchema: Schema = new Schema({
+  userId: {
+    type: Schema.Types.ObjectId,
+    ref: 'User',
+    required: true
+  },
+  action: {
+    type: String,
+    required: true
+  },
+  details: {
+    type: String,
+    required: true
+  }
+}, { timestamps: true });
+
+export default mongoose.model<IUserActionLog>('UserActionLog', UserActionLogSchema);
+
+==================================================
+Contents of C:\Users\eytan\Desktop\hebrewclubweb\server\src\routes\assignmentRoutes.ts:
+==================================================
+import express from 'express';
+import { getAssignments, createAssignment } from '../controllers/assignmentController';
+import { authenticateToken } from '../middleware/authMiddleware';
+
+const router = express.Router();
+
+router.get('/:courseId', authenticateToken, getAssignments);
+router.post('/', authenticateToken, createAssignment);
+
+// Add more routes for updating and deleting assignments
+
+export default router;
+
+==================================================
+Contents of C:\Users\eytan\Desktop\hebrewclubweb\server\src\routes\authRoutes.ts:
+==================================================
+import express from 'express';
+import { body, ValidationChain } from 'express-validator';
+import { csrfProtection } from '../middleware/csrfProtection';
+import { getCsrfToken, registerUser, loginUser, verifyTwoFactor, googleAuth, resetPassword, forgotPassword, logoutUser } from '../controllers/userController';
+import { updateUserProfile, deleteUserAccount } from '../controllers/userController';
+import { validateUpdateProfile } from '../validations';
+const router = express.Router();
+
+// Middleware for input validation
+const validateRegistration: ValidationChain[] = [
+  body('name').notEmpty().withMessage('שם הוא שדה חובה'),
+  body('email').isEmail().withMessage('כתובת אימייל לא חוקית'),
+  body('password').isLength({ min: 6 }).withMessage('הסיסמה חייבת להכיל לפחות 6 תווים')
+];
+
+const validateLogin: ValidationChain[] = [
+  body('username').notEmpty().withMessage('שם משתמש או אימייל הוא שדה חובה'),
+  body('password').notEmpty().withMessage('סיסמה היא שדה חובה')
+];
+const validateForgotPassword: ValidationChain[] = [
+  body('email').isEmail().withMessage('כתובת אימייל לא חוקית')
+];
+const validateResetPassword: ValidationChain[] = [
+  body('token').notEmpty().withMessage('טוקן איפוס סיסמה הוא שדה חובה'),
+  body('newPassword').isLength({ min: 6 }).withMessage('הסיסמה החדשה חייבת להכיל לפחות 6 תווים')
+];
+
+router.post('/reset-password', csrfProtection, validateResetPassword, resetPassword);
+router.post('/forgot-password', csrfProtection, validateForgotPassword, forgotPassword);
+const validateTwoFactor: ValidationChain[] = [
+  body('userId').notEmpty().withMessage('מזהה משתמש הוא שדה חובה'),
+  body('token').notEmpty().withMessage('טוקן הוא שדה חובה')
+];
+
+const validateGoogleAuth: ValidationChain[] = [
+  body('token').notEmpty().withMessage('טוקן Google הוא שדה חובה')
+];
+
+// Routes
+router.put('/update-profile', csrfProtection, validateUpdateProfile, updateUserProfile);
+router.delete('/delete-account', csrfProtection, deleteUserAccount);
+router.get('/csrf-token', csrfProtection, getCsrfToken);
+
+router.post('/register', csrfProtection, validateRegistration, registerUser);
+
+router.post('/login', csrfProtection, validateLogin, loginUser);
+
+router.post('/verify-two-factor', csrfProtection, validateTwoFactor, verifyTwoFactor);
+
+router.post('/google', csrfProtection, validateGoogleAuth, googleAuth);
+router.post('/logout', csrfProtection, logoutUser);
+export default router;
+
+==================================================
+Contents of C:\Users\eytan\Desktop\hebrewclubweb\server\src\routes\courseRoutes.ts:
+==================================================
+import express from 'express';
+import { getCourses, getCourseById } from '../controllers/courseController';
+import { authenticateToken  } from '../middleware/authMiddleware';
+
+const router = express.Router();
+
+router.get('/', authenticateToken , getCourses);
+router.get('/:id', authenticateToken , getCourseById);
+
+// Add more routes for creating, updating, and deleting courses
+
+export default router;
+
+==================================================
+Contents of C:\Users\eytan\Desktop\hebrewclubweb\server\src\routes\gradeRoutes.ts:
+==================================================
+import express from 'express';
+import { getGrades, addGrade } from '../controllers/gradeController';
+import { authenticateToken } from '../middleware/authMiddleware';
+
+const router = express.Router();
+
+router.get('/', authenticateToken, getGrades);
+router.post('/', authenticateToken, addGrade);
+
+// Add more routes as needed
+
+export default router;
+
+==================================================
+Contents of C:\Users\eytan\Desktop\hebrewclubweb\server\src\routes\leadRoutes.ts:
+==================================================
+import express from 'express';
+import { createLead } from '../controllers/leadController';
+
+const router = express.Router();
+
+router.post('/create', createLead);
+
+export default router;
+
+==================================================
+Contents of C:\Users\eytan\Desktop\hebrewclubweb\server\src\routes\messageRoutes.ts:
+==================================================
+import express from 'express';
+import { getMessages, sendMessage } from '../controllers/messageController';
+
+const router = express.Router();
+
+router.get('/', getMessages);
+router.post('/', sendMessage);
+
+export default router;
+
+==================================================
+Contents of C:\Users\eytan\Desktop\hebrewclubweb\server\src\routes\paymentRoutes.ts:
+==================================================
+import express from 'express';
+import { getPayments, makePayment } from '../controllers/paymentController';
+
+const router = express.Router();
+
+router.get('/', getPayments);
+router.post('/', makePayment);
+
+export default router;
+
+==================================================
+Contents of C:\Users\eytan\Desktop\hebrewclubweb\server\src\routes\personalAreaRoutes.ts:
+==================================================
+import express from 'express';
+import { getProfile, updateProfile, getCourses, getAssignments, getGrades } from '../controllers/personalAreaController';
+
+const router = express.Router();
+
+router.get('/profile', getProfile);
+router.put('/profile', updateProfile);
+router.get('/courses', getCourses);
+router.get('/assignments', getAssignments);
+router.get('/grades', getGrades);
+
+export default router;
+
+==================================================
+Contents of C:\Users\eytan\Desktop\hebrewclubweb\server\src\types\types.ts:
+==================================================
+// src/types/types.ts
+
+export interface User {
+    id: string;
+    name: string;
+    email: string;
+    username?: string;
+  }
+  
+  export interface Profile {
+    name: string;
+    email: string;
+    username?: string;
+    phoneNumber?: string;
+    profilePicture?: string;
+  }
+  
+  export interface Course {
+    id: string;
+    name: string;
+    description: string;
+    instructor: string;
+    startDate: Date;
+    endDate: Date;
+    level: 'beginner' | 'intermediate' | 'advanced';
+    enrolledStudents?: number;
+  }
+  
+  export interface Assignment {
+    id: string;
+    courseId: string;
+    title: string;
+    description: string;
+    dueDate: Date;
+    maxScore: number;
+  }
+  
+  export interface Grade {
+    id: string;
+    userId: string;
+    courseId: string;
+    assignmentId: string;
+    score: number;
+    feedback?: string;
+    submissionDate: Date;
+  }
+  
+  export interface AppError {
+    code: string;
+    message: string;
+    details?: any;
+  }
+  
+  export interface LoginCredentials {
+    username: string;
+    password: string;
+  }
+  
+  export interface RegisterData extends LoginCredentials {
+    name: string;
+    email: string;
+  }
+  
+  export interface AuthResponse {
+    user: User;
+    token: string;
+  }
+  
+  export interface PaginationParams {
+    page: number;
+    limit: number;
+  }
+  
+  export interface ApiResponse<T> {
+    data: T;
+    message?: string;
+    pagination?: {
+      total: number;
+      page: number;
+      limit: number;
+    };
+  }
+  
+  export type SortOrder = 'asc' | 'desc';
+  
+  export interface SortParams {
+    field: string;
+    order: SortOrder;
+  }
+  
+  export interface FilterParams {
+    [key: string]: string | number | boolean | Date;
+  }
+  
+  export interface SearchParams {
+    query: string;
+    fields: string[];
+  }
+  
+  export type Language = 'he' | 'en';
+  
+  export interface ThemeOptions {
+    mode: 'light' | 'dark';
+    primary: string;
+    secondary: string;
+  }
+
+==================================================
+Contents of C:\Users\eytan\Desktop\hebrewclubweb\server\src\utils\emailService.ts:
+==================================================
+import nodemailer from 'nodemailer';
+
+// יצירת טרנספורטר של nodemailer
+const transporter = nodemailer.createTransport({
+  host: process.env.EMAIL_HOST,
+  port: parseInt(process.env.EMAIL_PORT || '587'),
+  secure: process.env.EMAIL_SECURE === 'true',
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS,
+  },
+});
+
+export const sendResetPasswordEmail = async (to: string, resetToken: string) => {
+  const resetUrl = `${process.env.CLIENT_URL}/reset-password?token=${resetToken}`;
+
+  const mailOptions = {
+    from: process.env.EMAIL_FROM,
+    to: to,
+    subject: 'איפוס סיסמה',
+    html: `
+      <h1>בקשה לאיפוס סיסמה</h1>
+      <p>קיבלנו בקשה לאיפוס הסיסמה שלך. אם לא ביקשת זאת, אנא התעלם מהודעה זו.</p>
+      <p>לאיפוס הסיסמה, אנא לחץ על הקישור הבא:</p>
+      <a href="${resetUrl}">איפוס סיסמה</a>
+      <p>הקישור יהיה בתוקף למשך שעה אחת.</p>
+    `
+  };
+
+  try {
+    await transporter.sendMail(mailOptions);
+    console.log('אימייל לאיפוס סיסמה נשלח בהצלחה');
+  } catch (error) {
+    console.error('שגיאה בשליחת אימייל לאיפוס סיסמה:', error);
+    throw new Error('שגיאה בשליחת אימייל לאיפוס סיסמה');
+  }
+};
