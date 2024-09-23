@@ -20,7 +20,7 @@ const getCourseTitle = async (courseId: mongoose.Types.ObjectId | string): Promi
   return course ? course.title : 'Unknown Course';
 };
 
-export const getUsers = async (req: Request, res: Response) => {
+export const getUsers = async (req: Request, res: Response): Promise<void> => {
   try {
     const page = parseInt(req.query.page as string) || 1;
     const limit = parseInt(req.query.limit as string) || 10;
@@ -81,13 +81,14 @@ export const getUsers = async (req: Request, res: Response) => {
   }
 };
 
-export const createUser = async (req: Request, res: Response) => {
+export const createUser = async (req: Request, res: Response): Promise<void> => {
   try {
     const { name, email, username, password, role, courses, groups } = req.body;
 
     const existingUser = await User.findOne({ $or: [{ email }, { username }] });
     if (existingUser) {
-      return res.status(400).json({ success: false, error: 'User with this email or username already exists' } as ApiResponse<null>);
+      res.status(400).json({ success: false, error: 'User with this email or username already exists' } as ApiResponse<null>);
+      return;
     }
 
     const salt = await bcrypt.genSalt(10);
@@ -145,26 +146,29 @@ export const createUser = async (req: Request, res: Response) => {
   }
 };
 
-export const updateUser = async (req: Request, res: Response) => {
+export const updateUser = async (req: Request, res: Response): Promise<void> => {
   try {
     const _id = req.params.id;
     const { name, email, username, role, courses, groups } = req.body;
     const user = await User.findById(_id);
     if (!user) {
-      return res.status(404).json({ success: false, error: 'User not found' } as ApiResponse<null>);
+      res.status(404).json({ success: false, error: 'User not found' } as ApiResponse<null>);
+      return;
     }
 
     if (email !== user.email) {
       const existingUser = await User.findOne({ email });
       if (existingUser) {
-        return res.status(400).json({ success: false, error: 'Email is already in use' } as ApiResponse<null>);
+        res.status(400).json({ success: false, error: 'Email is already in use' } as ApiResponse<null>);
+        return;
       }
     }
 
     if (username !== user.username) {
       const existingUser = await User.findOne({ username });
       if (existingUser) {
-        return res.status(400).json({ success: false, error: 'Username is already in use' } as ApiResponse<null>);
+        res.status(400).json({ success: false, error: 'Username is already in use' } as ApiResponse<null>);
+        return;
       }
     }
 
@@ -209,13 +213,14 @@ export const updateUser = async (req: Request, res: Response) => {
   }
 };
 
-export const deleteUser = async (req: Request, res: Response) => {
+export const deleteUser = async (req: Request, res: Response): Promise<void> => {
   try {
     const { userId } = req.params;
     const user = await User.findByIdAndDelete(userId);
 
     if (!user) {
-      return res.status(404).json({ success: false, error: 'User not found' } as ApiResponse<null>);
+      res.status(404).json({ success: false, error: 'User not found' } as ApiResponse<null>);
+      return;
     }
     res.json({ success: true, message: 'User deleted successfully' } as ApiResponse<null>);
   } catch (error) {
@@ -224,15 +229,17 @@ export const deleteUser = async (req: Request, res: Response) => {
   }
 };
 
-export const setUserRole = async (req: Request, res: Response) => {
+export const setUserRole = async (req: Request, res: Response): Promise<void> => {
   try {
     const { userId, role } = req.body;
     if (!['user', 'admin', 'moderator', 'instructor'].includes(role)) {
-      return res.status(400).json({ success: false, error: 'Invalid role' } as ApiResponse<null>);
+      res.status(400).json({ success: false, error: 'Invalid role' } as ApiResponse<null>);
+      return;
     }
     const user = await User.findByIdAndUpdate(userId, { 'role.name': role }, { new: true });
     if (!user) {
-      return res.status(404).json({ success: false, error: 'User not found' } as ApiResponse<null>);
+      res.status(404).json({ success: false, error: 'User not found' } as ApiResponse<null>);
+      return;
     }
     res.json({ success: true, data: user } as ApiResponse<UserType>);
   } catch (err) {
@@ -241,12 +248,13 @@ export const setUserRole = async (req: Request, res: Response) => {
   }
 };
 
-export const toggleUserStatus = async (req: Request, res: Response) => {
+export const toggleUserStatus = async (req: Request, res: Response): Promise<void> => {
   try {
     const { userId } = req.params;
     const user = await User.findById(userId);
     if (!user) {
-      return res.status(404).json({ success: false, error: 'User not found' } as ApiResponse<null>);
+      res.status(404).json({ success: false, error: 'User not found' } as ApiResponse<null>);
+      return;
     }
     user.status = user.status === 'active' ? 'locked' : 'active';
     await user.save();
@@ -257,12 +265,13 @@ export const toggleUserStatus = async (req: Request, res: Response) => {
   }
 };
 
-export const addUserToGroup = async (req: Request, res: Response) => {
+export const addUserToGroup = async (req: Request, res: Response): Promise<void> => {
   try {
     const { userId, groupId } = req.body;
     const user = await User.findById(userId);
     if (!user) {
-      return res.status(404).json({ success: false, error: 'User not found' } as ApiResponse<null>);
+      res.status(404).json({ success: false, error: 'User not found' } as ApiResponse<null>);
+      return;
     }
     if (!user.groups.includes(new mongoose.Types.ObjectId(groupId))) {
       user.groups.push(new mongoose.Types.ObjectId(groupId));
@@ -275,12 +284,13 @@ export const addUserToGroup = async (req: Request, res: Response) => {
   }
 };
 
-export const removeUserFromGroup = async (req: Request, res: Response) => {
+export const removeUserFromGroup = async (req: Request, res: Response): Promise<void> => {
   try {
     const { userId, groupId } = req.body;
     const user = await User.findById(userId);
     if (!user) {
-      return res.status(404).json({ success: false, error: 'User not found' } as ApiResponse<null>);
+      res.status(404).json({ success: false, error: 'User not found' } as ApiResponse<null>);
+      return;
     }
     user.groups = user.groups.filter(group => group.toString() !== groupId);
     await user.save();
@@ -291,7 +301,7 @@ export const removeUserFromGroup = async (req: Request, res: Response) => {
   }
 };
 
-export const exportUsers = async (req: Request, res: Response) => {
+export const exportUsers = async (req: Request, res: Response): Promise<void> => {
   try {
     const users = await User.find().select('-password -twoFactorSecret -resetPasswordToken -resetPasswordExpires -googleId -facebookId -emailVerificationToken -jwtSecret');
     
@@ -322,10 +332,11 @@ export const exportUsers = async (req: Request, res: Response) => {
   }
 };
 
-export const importUsers = async (req: MulterRequest, res: Response) => {
+export const importUsers = async (req: MulterRequest, res: Response): Promise<void> => {
   try {
     if (!req.file) {
-      return res.status(400).json({ success: false, error: 'No file uploaded' } as ApiResponse<null>);
+      res.status(400).json({ success: false, error: 'No file uploaded' } as ApiResponse<null>);
+      return;
     }
 
     const results: any[] = [];
@@ -358,12 +369,13 @@ export const importUsers = async (req: MulterRequest, res: Response) => {
   }
 };
 
-export const resetUserPassword = async (req: Request, res: Response) => {
+export const resetUserPassword = async (req: Request, res: Response): Promise<void> => {
   try {
     const { userId } = req.params;
     const user = await User.findById(userId);
     if (!user) {
-      return res.status(404).json({ success: false, error: 'User not found' } as ApiResponse<null>);
+      res.status(404).json({ success: false, error: 'User not found' } as ApiResponse<null>);
+      return;
     }
 
     const tempPassword = Math.random().toString(36).slice(-8);
@@ -385,12 +397,13 @@ export const resetUserPassword = async (req: Request, res: Response) => {
   }
 };
 
-export const getUserActivity = async (req: Request, res: Response) => {
+export const getUserActivity = async (req: Request, res: Response): Promise<void> => {
   try {
     const { userId } = req.params;
     const user = await User.findById(userId);
     if (!user) {
-      return res.status(404).json({ success: false, error: 'User not found' } as ApiResponse<null>);
+      res.status(404).json({ success: false, error: 'User not found' } as ApiResponse<null>);
+      return;
     }
 
     const enhancedCourses = await Promise.all(user.courses.map(async courseId => ({
@@ -412,18 +425,20 @@ export const getUserActivity = async (req: Request, res: Response) => {
   }
 };
 
-export const updateUserStatus = async (req: Request, res: Response) => {
+export const updateUserStatus = async (req: Request, res: Response): Promise<void> => {
   try {
     const { userId } = req.params;
     const { status } = req.body;
 
     if (!['active', 'inactive', 'locked'].includes(status)) {
-      return res.status(400).json({ success: false, error: 'Invalid status' } as ApiResponse<null>);
+      res.status(400).json({ success: false, error: 'Invalid status' } as ApiResponse<null>);
+      return;
     }
 
     const user = await User.findByIdAndUpdate(userId, { status }, { new: true });
     if (!user) {
-      return res.status(404).json({ success: false, error: 'User not found' } as ApiResponse<null>);
+      res.status(404).json({ success: false, error: 'User not found' } as ApiResponse<null>);
+      return;
     }
 
     res.json({ success: true, data: user } as ApiResponse<UserType>);
@@ -433,7 +448,7 @@ export const updateUserStatus = async (req: Request, res: Response) => {
   }
 };
 
-export const getUserStats = async (req: Request, res: Response) => {
+export const getUserStats = async (req: Request, res: Response): Promise<void> => {
   try {
     const totalUsers = await User.countDocuments();
     const activeUsers = await User.countDocuments({ status: 'active' });

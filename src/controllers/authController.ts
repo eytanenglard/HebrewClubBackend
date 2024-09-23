@@ -7,7 +7,7 @@ import crypto from 'crypto';
 import dotenv from 'dotenv';
 import UserModel, { UserDocument } from '../models/User';
 import { sendPasswordResetEmail} from '../controllers/emailController';
-import axios from 'axios';
+import { sendEmailVerification as sendVerificationEmail } from '../controllers/emailController';
 
 dotenv.config();
 const LOG_PREFIX = '[AuthController]';
@@ -15,10 +15,7 @@ const JWT_SECRET = process.env.JWT_SECRET || 'your_jwt_secret';
 const API_BASE_URL = process.env.API_BASE_URL || 'http://localhost:5000/api';
 console.log(`${LOG_PREFIX} API_BASE_URL:`, API_BASE_URL);
 
-const api = axios.create({
-  baseURL: API_BASE_URL,
-  withCredentials: true,
-});
+
 
 const createToken = (userId: string) => {
   console.log(`${LOG_PREFIX} Creating token for user: ${userId}`);
@@ -515,21 +512,23 @@ export const resetPassword = async (req: Request, res: Response): Promise<void> 
     res.status(500).json({ success: false, message: 'An error occurred' });
   }
 };
-
-const sendEmailVerification = async (to: string, verificationToken: string, verificationCode:string, name: string): Promise<boolean> => {
+const sendEmailVerification = async (to: string, verificationToken: string, verificationCode: string, name: string): Promise<boolean> => {
   console.log(`${LOG_PREFIX} Sending email verification to:`, to);
   try {
-    const response = await api.post<{ success: boolean }>('/email/verify', { 
-      to, 
-      verificationToken,
-      verificationCode,
-      name
-    });
+    const success = await sendVerificationEmail({
+      body: {
+        to,
+        verificationToken,
+        verificationCode,
+        name
+      }
+    } as any, {} as any);
+    
     console.log(`${LOG_PREFIX} Email verification sent successfully`);
-    return response.data.success;
+    return success;
   } catch (error) {
     console.error(`${LOG_PREFIX} Error sending email verification:`, error);
-    throw error;
+    return false;
   }
 };
 
