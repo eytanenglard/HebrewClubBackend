@@ -1,4 +1,3 @@
-import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { Request, Response } from 'express';
 import User from '../models/User';
@@ -53,7 +52,7 @@ export const registerUser = async (req: Request, res: Response): Promise<void> =
 
     const verificationToken = crypto.randomBytes(20).toString('hex');
     const verificationCode = Math.floor(100000 + Math.random() * 900000).toString(); // 6-digit code
-    const defaultRole = { name: 'user', permissions: [] };
+    const defaultRole: UserRole = { name: 'user', permissions: [] };
     const newUser = new User({
       name,
       email,
@@ -70,7 +69,7 @@ export const registerUser = async (req: Request, res: Response): Promise<void> =
     console.log(`${LOG_PREFIX} New user saved. ID: ${newUser._id}`);
 
     // Send verification email
-    const emailSent = await sendEmailVerification(email, verificationToken, verificationCode, verificationCode, name);
+    const emailSent = await sendEmailVerification(email, verificationToken, verificationCode, name);
     if (!emailSent) {
       console.error(`${LOG_PREFIX} Failed to send verification email`);
       res.status(500).json({ success: false, error: 'Failed to send verification email' } as ApiResponse<null>);

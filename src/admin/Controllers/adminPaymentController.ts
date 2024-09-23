@@ -2,7 +2,7 @@ import { Request, Response } from 'express';
 import Payment from '../../models/Payment';
 import { Payment as PaymentType, ApiResponse } from '../../types/models';
 
-export const getPaymentManagementData = async (req: Request, res: Response) => {
+export const getPaymentManagementData = async (req: Request, res: Response): Promise<void> => {
   try {
     const payments = await Payment.find()
       .populate('userId', 'name email')
@@ -13,7 +13,7 @@ export const getPaymentManagementData = async (req: Request, res: Response) => {
   }
 };
 
-export const processPayment = async (req: Request, res: Response) => {
+export const processPayment = async (req: Request, res: Response): Promise<void> => {
   try {
     const { userId, courseId, amount, currency, paymentMethod } = req.body;
     const newPayment = new Payment({
@@ -32,12 +32,13 @@ export const processPayment = async (req: Request, res: Response) => {
   }
 };
 
-export const refundPayment = async (req: Request, res: Response) => {
+export const refundPayment = async (req: Request, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
     const payment = await Payment.findById(id);
     if (!payment) {
-      return res.status(404).json({ success: false, error: 'Payment not found' } as ApiResponse<null>);
+      res.status(404).json({ success: false, error: 'Payment not found' } as ApiResponse<null>);
+      return;
     }
     payment.status = 'refunded';
     await payment.save();

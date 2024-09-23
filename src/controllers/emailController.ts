@@ -92,6 +92,7 @@ export const sendCoursePurchaseConfirmation = async (req: Request, res: Response
 
 export const sendEmailVerification = async (req: Request, res: Response): Promise<void> => {
   const { to, verificationToken, verificationCode, name } = req.body;
+  console.log('to', to);
   const subject = 'Welcome to Hebrew Club - Verify Your Email Address';
   const verificationLink = `${config.website.url}/verify-email?token=${verificationToken}`;
   const html = `

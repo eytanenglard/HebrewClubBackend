@@ -6,7 +6,12 @@ import {
 const router = express.Router();
 
 router.post('/welcome', emailController.sendWelcomeEmail);
-router.post('/password-reset', emailController.sendPasswordResetEmail);
+router.post('/password-reset', (req, res) => {
+  const { to, resetToken, attemptsLeft } = req.body;
+  emailController.sendPasswordResetEmail(to, resetToken, attemptsLeft)
+    .then(success => res.json({ success }))
+    .catch(error => res.status(500).json({ success: false, error: error.message }));
+});
 router.post('/course-purchase', emailController.sendCoursePurchaseConfirmation);
 router.post('/verify', emailController.sendEmailVerification);
 router.post('/account-recovery', emailController.sendAccountRecoveryInstructions);

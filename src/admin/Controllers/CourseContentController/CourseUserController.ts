@@ -1,11 +1,10 @@
-// CourseUserController.ts
 import { Request, Response } from 'express';
 import Course from '../../../models/Course';
 import User from '../../../models/User';
 import { Course as CourseType, ApiResponse } from '../../../types/models';
 import mongoose from 'mongoose';
 
-export const addUserToCourse = async (req: Request, res: Response) => {
+export const addUserToCourse = async (req: Request, res: Response): Promise<void> => {
   try {
     const courseId = new mongoose.Types.ObjectId(req.params.courseId);
     const userId = new mongoose.Types.ObjectId(req.body.userId);
@@ -13,7 +12,8 @@ export const addUserToCourse = async (req: Request, res: Response) => {
     const user = await User.findById(userId);
 
     if (!course || !user) {
-      return res.status(404).json({ success: false, error: 'Course or user not found' } as ApiResponse<null>);
+      res.status(404).json({ success: false, error: 'Course or user not found' } as ApiResponse<null>);
+      return;
     }
 
     if (!course.users.includes(userId)) {
@@ -37,7 +37,7 @@ export const addUserToCourse = async (req: Request, res: Response) => {
   }
 };
 
-export const removeUserFromCourse = async (req: Request, res: Response) => {
+export const removeUserFromCourse = async (req: Request, res: Response): Promise<void> => {
   try {
     const courseId = new mongoose.Types.ObjectId(req.params.courseId);
     const userId = new mongoose.Types.ObjectId(req.body.userId);
@@ -45,7 +45,8 @@ export const removeUserFromCourse = async (req: Request, res: Response) => {
     const user = await User.findById(userId);
 
     if (!course || !user) {
-      return res.status(404).json({ success: false, error: 'Course or user not found' } as ApiResponse<null>);
+      res.status(404).json({ success: false, error: 'Course or user not found' } as ApiResponse<null>);
+      return;
     }
 
     course.users = course.users.filter((id) => !id.equals(userId));

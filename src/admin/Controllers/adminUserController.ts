@@ -2,11 +2,10 @@ import { Request, Response } from 'express';
 import User from '../../models/User';
 import Course from '../../models/Course';
 import bcrypt from 'bcryptjs';
-import { User as UserType, UserManagementData, ApiResponse, PaginatedResponse, UserRole} from '../../types/models';
+import { User as UserType, ApiResponse, PaginatedResponse, UserRole, EnhancedUser } from '../../types/models';
 import { createObjectCsvStringifier } from 'csv-writer';
 import fs from 'fs';
 import csv from 'csv-parser';
-import multer from 'multer';
 import mongoose from "mongoose";
 
 interface MulterRequest extends Request {
@@ -16,14 +15,11 @@ interface MulterRequest extends Request {
   } | Express.Multer.File[];
 }
 
-interface EnhancedUser extends Omit<UserType, 'courses'> {
-  courses: string[];
-  enhancedCourses: Array<{ _id: mongoose.Types.ObjectId | string; title: string }>;
-}
 const getCourseTitle = async (courseId: mongoose.Types.ObjectId | string): Promise<string> => {
   const course = await Course.findById(courseId);
   return course ? course.title : 'Unknown Course';
 };
+
 export const getUsers = async (req: Request, res: Response) => {
   try {
     const page = parseInt(req.query.page as string) || 1;
@@ -47,14 +43,25 @@ export const getUsers = async (req: Request, res: Response) => {
 
     const enhancedUsers: EnhancedUser[] = await Promise.all(users.map(async user => {
       const enhancedCourses = await Promise.all(user.courses.map(async courseId => ({
-        _id: courseId,
+        _id: courseId.toString(),
         title: await getCourseTitle(courseId)
       })));
 
       return {
         ...user,
+        _id: user._id.toString(),
         enhancedCourses,
-        courses: user.courses.map(course => course.toString())
+        courses: user.courses.map(course => course.toString()),
+        groups: user.groups.map(group => group.toString()),
+        completedLessons: user.completedLessons.map(lesson => lesson.toString()),
+        role: {
+          ...user.role,
+          permissions: user.role.permissions.map(permission => permission.toString())
+        },
+        certificates: user.certificates.map(cert => ({
+          ...cert,
+          courseId: cert.courseId.toString()
+        }))
       };
     }));
 
@@ -94,10 +101,11 @@ export const createUser = async (req: Request, res: Response) => {
     const enhancedCourses = await Promise.all(courseIds.map(async (courseId: mongoose.Types.ObjectId) => {
       const course = await Course.findById(courseId);
       return {
-        courseId: courseId,
+        _id: courseId.toString(),
         title: course ? course.title : 'Unknown Course'
       };
     }));
+
     const newUser = new User({
       name,
       email,
@@ -105,7 +113,7 @@ export const createUser = async (req: Request, res: Response) => {
       password: hashedPassword,
       role: roleObject,
       courses: courseIds,
-      groups,
+      groups: groups.map((groupId: string) => new mongoose.Types.ObjectId(groupId)),
       lastLogin: new Date(),
       status: 'active'
     });
@@ -114,8 +122,16 @@ export const createUser = async (req: Request, res: Response) => {
 
     const responseUser: EnhancedUser = {
       ...newUser.toObject(),
+      _id: newUser._id.toString(),
       enhancedCourses,
-      courses: newUser.courses.map(course => course.toString())
+      courses: newUser.courses.map(course => course.toString()),
+      groups: newUser.groups.map(group => group.toString()),
+      completedLessons: [],
+      role: {
+        ...newUser.role,
+        permissions: newUser.role.permissions.map(permission => permission.toString())
+      },
+      certificates: []
     };
 
     res.status(201).json({ 
@@ -131,7 +147,7 @@ export const createUser = async (req: Request, res: Response) => {
 
 export const updateUser = async (req: Request, res: Response) => {
   try {
-    const _id = req.url.split('/').pop();
+    const _id = req.params.id;
     const { name, email, username, role, courses, groups } = req.body;
     const user = await User.findById(_id);
     if (!user) {
@@ -157,19 +173,30 @@ export const updateUser = async (req: Request, res: Response) => {
     user.username = username;
     user.role = role;
     user.courses = courses.map((courseId: string) => new mongoose.Types.ObjectId(courseId));
-    user.groups = groups;
+    user.groups = groups.map((groupId: string) => new mongoose.Types.ObjectId(groupId));
 
     await user.save();
 
     const enhancedCourses = await Promise.all(user.courses.map(async courseId => ({
-      _id: courseId,
+      _id: courseId.toString(),
       title: await getCourseTitle(courseId)
     })));
 
     const responseUser: EnhancedUser = {
       ...user.toObject(),
+      _id: user._id.toString(),
       enhancedCourses,
-      courses: user.courses.map(course => course.toString())
+      courses: user.courses.map(course => course.toString()),
+      groups: user.groups.map(group => group.toString()),
+      completedLessons: user.completedLessons.map(lesson => lesson.toString()),
+      role: {
+        ...user.role,
+        permissions: user.role.permissions.map(permission => permission.toString())
+      },
+      certificates: user.certificates.map(cert => ({
+        ...cert,
+        courseId: cert.courseId.toString()
+      }))
     };
 
     res.json({ 
@@ -200,10 +227,10 @@ export const deleteUser = async (req: Request, res: Response) => {
 export const setUserRole = async (req: Request, res: Response) => {
   try {
     const { userId, role } = req.body;
-    if (!['user', 'admin'].includes(role)) {
+    if (!['user', 'admin', 'moderator', 'instructor'].includes(role)) {
       return res.status(400).json({ success: false, error: 'Invalid role' } as ApiResponse<null>);
     }
-    const user = await User.findByIdAndUpdate(userId, { role }, { new: true });
+    const user = await User.findByIdAndUpdate(userId, { 'role.name': role }, { new: true });
     if (!user) {
       return res.status(404).json({ success: false, error: 'User not found' } as ApiResponse<null>);
     }
@@ -232,13 +259,13 @@ export const toggleUserStatus = async (req: Request, res: Response) => {
 
 export const addUserToGroup = async (req: Request, res: Response) => {
   try {
-    const { userId, groupName } = req.body;
+    const { userId, groupId } = req.body;
     const user = await User.findById(userId);
     if (!user) {
       return res.status(404).json({ success: false, error: 'User not found' } as ApiResponse<null>);
     }
-    if (!user.groups.includes(groupName)) {
-      user.groups.push(groupName);
+    if (!user.groups.includes(new mongoose.Types.ObjectId(groupId))) {
+      user.groups.push(new mongoose.Types.ObjectId(groupId));
       await user.save();
     }
     res.json({ success: true, data: user } as ApiResponse<UserType>);
@@ -250,12 +277,12 @@ export const addUserToGroup = async (req: Request, res: Response) => {
 
 export const removeUserFromGroup = async (req: Request, res: Response) => {
   try {
-    const { userId, groupName } = req.body;
+    const { userId, groupId } = req.body;
     const user = await User.findById(userId);
     if (!user) {
       return res.status(404).json({ success: false, error: 'User not found' } as ApiResponse<null>);
     }
-    user.groups = user.groups.filter(group => group !== groupName);
+    user.groups = user.groups.filter(group => group.toString() !== groupId);
     await user.save();
     res.json({ success: true, data: user } as ApiResponse<UserType>);
   } catch (err) {
@@ -279,7 +306,11 @@ export const exportUsers = async (req: Request, res: Response) => {
       ]
     });
 
-    const csvData = csvStringifier.stringifyRecords(users);
+    const csvData = csvStringifier.stringifyRecords(users.map(user => ({
+      ...user.toObject(),
+      role: user.role.name,
+      courses: user.courses.join(', ')
+    })));
     const csvString = csvStringifier.getHeaderString() + csvData;
 
     res.setHeader('Content-Type', 'text/csv');
@@ -312,8 +343,8 @@ export const importUsers = async (req: MulterRequest, res: Response) => {
               email: user.email,
               username: user.username,
               password: hashedPassword,
-              role: user.role || 'user',
-              courses: user.courses,
+              role: { name: user.role || 'user', permissions: [] },
+              courses: user.courses ? user.courses.split(',').map((course: string) => course.trim()) : [],
               status: user.status || 'active'
             });
           }
@@ -363,7 +394,7 @@ export const getUserActivity = async (req: Request, res: Response) => {
     }
 
     const enhancedCourses = await Promise.all(user.courses.map(async courseId => ({
-      _id: courseId,
+      _id: courseId.toString(),
       title: await getCourseTitle(courseId)
     })));
 
@@ -386,7 +417,7 @@ export const updateUserStatus = async (req: Request, res: Response) => {
     const { userId } = req.params;
     const { status } = req.body;
 
-    if (!['active', 'locked'].includes(status)) {
+    if (!['active', 'inactive', 'locked'].includes(status)) {
       return res.status(400).json({ success: false, error: 'Invalid status' } as ApiResponse<null>);
     }
 
@@ -407,13 +438,17 @@ export const getUserStats = async (req: Request, res: Response) => {
     const totalUsers = await User.countDocuments();
     const activeUsers = await User.countDocuments({ status: 'active' });
     const lockedUsers = await User.countDocuments({ status: 'locked' });
-    const adminUsers = await User.countDocuments({ 'role.name': 'admin' });
+    const inactiveUsers = await User.countDocuments({ status: 'inactive' });
+    const usersByRole = await User.aggregate([
+      { $group: { _id: "$role.name", count: { $sum: 1 } } }
+    ]);
 
     const stats = {
       totalUsers,
       activeUsers,
       lockedUsers,
-      adminUsers,
+      inactiveUsers,
+      usersByRole: Object.fromEntries(usersByRole.map(item => [item._id, item.count]))
     };
 
     res.json({ success: true, data: stats } as ApiResponse<typeof stats>);
@@ -422,7 +457,6 @@ export const getUserStats = async (req: Request, res: Response) => {
     res.status(500).json({ success: false, error: 'Server error while fetching user stats' } as ApiResponse<null>);
   }
 };
-
 
 export const addCourseToUser = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -446,14 +480,25 @@ export const addCourseToUser = async (req: Request, res: Response): Promise<void
     await user.save();
 
     const enhancedCourses = await Promise.all(user.courses.map(async courseId => ({
-      _id: courseId,
+      _id: courseId.toString(),
       title: await getCourseTitle(courseId)
     })));
 
     const updatedUser: EnhancedUser = {
       ...user.toObject(),
+      _id: user._id.toString(),
       enhancedCourses,
-      courses: user.courses.map(course => course.toString())
+      courses: user.courses.map(course => course.toString()),
+      groups: user.groups.map(group => group.toString()),
+      completedLessons: user.completedLessons.map(lesson => lesson.toString()),
+      role: {
+        ...user.role,
+        permissions: user.role.permissions.map(permission => permission.toString())
+      },
+      certificates: user.certificates.map(cert => ({
+        ...cert,
+        courseId: cert.courseId.toString()
+      }))
     };
 
     res.json({ success: true, data: updatedUser } as ApiResponse<EnhancedUser>);
@@ -462,6 +507,7 @@ export const addCourseToUser = async (req: Request, res: Response): Promise<void
     res.status(500).json({ success: false, error: 'Server error' } as ApiResponse<null>);
   }
 };
+
 export const removeCourseFromUser = async (req: Request, res: Response): Promise<void> => {
   try {
     const { userId, courseId } = req.params;
@@ -483,14 +529,25 @@ export const removeCourseFromUser = async (req: Request, res: Response): Promise
     await user.save();
 
     const enhancedCourses = await Promise.all(user.courses.map(async courseId => ({
-      _id: courseId,
+      _id: courseId.toString(),
       title: await getCourseTitle(courseId)
     })));
 
     const updatedUser: EnhancedUser = {
       ...user.toObject(),
+      _id: user._id.toString(),
       enhancedCourses,
-      courses: user.courses.map(course => course.toString())
+      courses: user.courses.map(course => course.toString()),
+      groups: user.groups.map(group => group.toString()),
+      completedLessons: user.completedLessons.map(lesson => lesson.toString()),
+      role: {
+        ...user.role,
+        permissions: user.role.permissions.map(permission => permission.toString())
+      },
+      certificates: user.certificates.map(cert => ({
+        ...cert,
+        courseId: cert.courseId.toString()
+      }))
     };
 
     res.json({ success: true, data: updatedUser } as ApiResponse<EnhancedUser>);
@@ -506,20 +563,121 @@ export const getAllUsers = async (req: Request, res: Response): Promise<void> =>
     
     const enhancedUsers: EnhancedUser[] = await Promise.all(users.map(async user => {
       const enhancedCourses = await Promise.all(user.courses.map(async courseId => ({
-        _id: courseId,
+        _id: courseId.toString(),
         title: await getCourseTitle(courseId)
       })));
 
       return {
         ...user.toObject(),
+        _id: user._id.toString(),
         enhancedCourses,
-        courses: user.courses.map(course => course.toString())
+        courses: user.courses.map(course => course.toString()),
+        groups: user.groups.map(group => group.toString()),
+        completedLessons: user.completedLessons.map(lesson => lesson.toString()),
+        role: {
+          ...user.role,
+          permissions: user.role.permissions.map(permission => permission.toString())
+        },
+        certificates: user.certificates.map(cert => ({
+          ...cert,
+          courseId: cert.courseId.toString()
+        }))
       };
     }));
 
     res.json({ success: true, data: enhancedUsers } as ApiResponse<EnhancedUser[]>);
   } catch (error) {
     console.error('Error fetching all users:', error);
+    res.status(500).json({ success: false, error: 'Server error' } as ApiResponse<null>);
+  }
+};
+
+export const getUserById = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { userId } = req.params;
+    const user = await User.findById(userId).select('-password');
+
+    if (!user) {
+      res.status(404).json({ success: false, error: 'User not found' } as ApiResponse<null>);
+      return;
+    }
+
+    const enhancedCourses = await Promise.all(user.courses.map(async courseId => ({
+      _id: courseId.toString(),
+      title: await getCourseTitle(courseId)
+    })));
+
+    const enhancedUser: EnhancedUser = {
+      ...user.toObject(),
+      _id: user._id.toString(),
+      enhancedCourses,
+      courses: user.courses.map(course => course.toString()),
+      groups: user.groups.map(group => group.toString()),
+      completedLessons: user.completedLessons.map(lesson => lesson.toString()),
+      role: {
+        ...user.role,
+        permissions: user.role.permissions.map(permission => permission.toString())
+      },
+      certificates: user.certificates.map(cert => ({
+        ...cert,
+        courseId: cert.courseId.toString()
+      }))
+    };
+
+    res.json({ success: true, data: enhancedUser } as ApiResponse<EnhancedUser>);
+  } catch (error) {
+    console.error('Error fetching user by ID:', error);
+    res.status(500).json({ success: false, error: 'Server error' } as ApiResponse<null>);
+  }
+};
+
+export const updateUserProfile = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { userId } = req.params;
+    const updateData = req.body;
+
+    const user = await User.findById(userId);
+
+    if (!user) {
+      res.status(404).json({ success: false, error: 'User not found' } as ApiResponse<null>);
+      return;
+    }
+
+    // Update only allowed fields
+    const allowedFields = ['name', 'email', 'phone', 'username', 'dateOfBirth', 'address', 'city', 'country', 'bio', 'avatar'];
+    allowedFields.forEach(field => {
+      if (updateData[field] !== undefined) {
+        (user as any)[field] = updateData[field];
+      }
+    });
+
+    await user.save();
+
+    const enhancedCourses = await Promise.all(user.courses.map(async courseId => ({
+      _id: courseId.toString(),
+      title: await getCourseTitle(courseId)
+    })));
+
+    const updatedUser: EnhancedUser = {
+      ...user.toObject(),
+      _id: user._id.toString(),
+      enhancedCourses,
+      courses: user.courses.map(course => course.toString()),
+      groups: user.groups.map(group => group.toString()),
+      completedLessons: user.completedLessons.map(lesson => lesson.toString()),
+      role: {
+        ...user.role,
+        permissions: user.role.permissions.map(permission => permission.toString())
+      },
+      certificates: user.certificates.map(cert => ({
+        ...cert,
+        courseId: cert.courseId.toString()
+      }))
+    };
+
+    res.json({ success: true, data: updatedUser } as ApiResponse<EnhancedUser>);
+  } catch (error) {
+    console.error('Error updating user profile:', error);
     res.status(500).json({ success: false, error: 'Server error' } as ApiResponse<null>);
   }
 };
@@ -541,5 +699,7 @@ export default {
   getUserStats,
   addCourseToUser,
   removeCourseFromUser,
-  getAllUsers
+  getAllUsers,
+  getUserById,
+  updateUserProfile
 };

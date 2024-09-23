@@ -12,6 +12,9 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
+  "engines": {
+    "node": "20.x"
+  },
   "dependencies": {
     "@types/bcrypt": "^5.0.2",
     "bcrypt": "^5.1.1",
@@ -37,9 +40,7 @@
     "passport-facebook": "^3.0.0",
     "passport-google-oauth20": "^2.0.0",
     "speakeasy": "^2.0.0",
-    "uuid": "^10.0.0"
-  },
-  "devDependencies": {
+    "uuid": "^10.0.0",
     "@types/bcryptjs": "^2.4.6",
     "@types/cookie-parser": "^1.4.7",
     "@types/cors": "^2.8.17",
@@ -57,8 +58,10 @@
     "@types/passport-google-oauth20": "^2.0.16",
     "@types/speakeasy": "^2.0.10",
     "@types/uuid": "^10.0.0",
-    "nodemon": "^3.1.4",
-    "ts-node": "^10.9.1",
     "typescript": "^5.5.4"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.4",
+    "ts-node": "^10.9.1"
   }
 }

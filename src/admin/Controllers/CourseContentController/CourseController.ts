@@ -4,9 +4,9 @@ import User from '../../../models/User';
 import { Course as CourseType, CourseData, User as UserType, ApiResponse, PaginatedResponse } from '../../../types/models';
 import mongoose from 'mongoose';
 
-export const getCourseContent = async (req: Request, res: Response) => {
+export const getCourseContent = async (req: Request, res: Response): Promise<void> => {
   try {
-    const _id = new mongoose.Types.ObjectId( req.params.courseId);
+    const _id = new mongoose.Types.ObjectId(req.params.courseId);
     const course = await Course.findById(_id)
       .populate({
         path: 'sections',
@@ -20,10 +20,11 @@ export const getCourseContent = async (req: Request, res: Response) => {
       .lean();
 
     if (!course) {
-      return res.status(404).json({ 
+      res.status(404).json({ 
         success: false, 
         error: 'Course not found' 
       } as ApiResponse<null>);
+      return;
     }
 
     res.json({ 
@@ -38,7 +39,8 @@ export const getCourseContent = async (req: Request, res: Response) => {
     } as ApiResponse<null>);
   }
 };
-export const getCourseManagementData = async (req: Request, res: Response) => {
+
+export const getCourseManagementData = async (req: Request, res: Response): Promise<void> => {
   try {
     const page = parseInt(req.query.page as string) || 1;
     const limit = parseInt(req.query.limit as string) || 10;
@@ -69,7 +71,7 @@ export const getCourseManagementData = async (req: Request, res: Response) => {
   }
 };
 
-export const createCourse = async (req: Request, res: Response) => {
+export const createCourse = async (req: Request, res: Response): Promise<void> => {
   try {
     const courseData: CourseData = req.body;
     
@@ -91,14 +93,15 @@ export const createCourse = async (req: Request, res: Response) => {
   }
 };
 
-export const updateCourse = async (req: Request, res: Response) => {
+export const updateCourse = async (req: Request, res: Response): Promise<void> => {
   try {
     const courseId = new mongoose.Types.ObjectId(req.params.courseId);
     const updateData: Partial<CourseData> = req.body;
 
     const course = await Course.findByIdAndUpdate(courseId, updateData, { new: true });
     if (!course) {
-      return res.status(404).json({ success: false, error: 'Course not found' } as ApiResponse<null>);
+      res.status(404).json({ success: false, error: 'Course not found' } as ApiResponse<null>);
+      return;
     }
     res.json({ 
       success: true, 
@@ -110,13 +113,14 @@ export const updateCourse = async (req: Request, res: Response) => {
   }
 };
 
-export const deleteCourse = async (req: Request, res: Response) => {
+export const deleteCourse = async (req: Request, res: Response): Promise<void> => {
   try {
     const courseId = new mongoose.Types.ObjectId(req.params.courseId);
 
     const course = await Course.findByIdAndDelete(courseId);
     if (!course) {
-      return res.status(404).json({ success: false, error: 'Course not found' } as ApiResponse<null>);
+      res.status(404).json({ success: false, error: 'Course not found' } as ApiResponse<null>);
+      return;
     }
 
     await User.updateMany(
@@ -131,7 +135,7 @@ export const deleteCourse = async (req: Request, res: Response) => {
   }
 };
 
-export const updateCourseStructure = async (req: Request, res: Response) => {
+export const updateCourseStructure = async (req: Request, res: Response): Promise<void> => {
   try {
     const courseId = new mongoose.Types.ObjectId(req.params.courseId);
     const updatedCourseData: CourseType = req.body;
@@ -139,7 +143,8 @@ export const updateCourseStructure = async (req: Request, res: Response) => {
     const updatedCourse = await Course.findByIdAndUpdate(courseId, updatedCourseData, { new: true });
 
     if (!updatedCourse) {
-      return res.status(404).json({ success: false, error: 'Course not found' } as ApiResponse<null>);
+      res.status(404).json({ success: false, error: 'Course not found' } as ApiResponse<null>);
+      return;
     }
 
     res.json({ 
@@ -153,7 +158,7 @@ export const updateCourseStructure = async (req: Request, res: Response) => {
   }
 };
 
-export const getInstructors = async (req: Request, res: Response) => {
+export const getInstructors = async (req: Request, res: Response): Promise<void> => {
   try {
     const instructors = await User.find({ 'role.name': 'instructor' });
     res.json({ 
@@ -166,7 +171,7 @@ export const getInstructors = async (req: Request, res: Response) => {
   }
 };
 
-export const getUsersCourse = async (req: Request, res: Response) => {
+export const getUsersCourse = async (req: Request, res: Response): Promise<void> => {
   try {
     const users = await User.find();
     res.json({ 

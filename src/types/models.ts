@@ -58,14 +58,17 @@ export interface User {
   pendingCourseId?: string; 
 }
 
-export type UserResponse = WithStringId<Omit<User, 'role' | 'groups' | 'courses' | 'completedLessons' | 'courseEnrollments' | 'certificates'>> & {
+export type UserResponse = WithStringId<Omit<User, 'role' | 'groups' | 'courses' | 'completedLessons' | 'certificates'>> & {
   role: UserRoleResponse;
   groups: string[];
   courses: string[];
   completedLessons: string[];
   certificates: CertificateResponse[];
 };
-
+export interface EnhancedUser extends Omit<UserResponse, 'courses'> {
+  courses: string[];
+  enhancedCourses: Array<{ _id: string; title: string }>;
+}
 export interface UserData {
   name: string;
   email: string;
@@ -197,6 +200,8 @@ export interface Course {
   nextStartDate?: Date;
   prerequisiteCourses?: mongoose.Types.ObjectId[];
   ageGroup: string;
+  minParticipants: number;
+  courseType: 'recorded' | 'live';
 }
 
 export type CourseResponse = WithStringId<Omit<Course, 'instructors' | 'users' | 'sections' | 'prerequisiteCourses'>> & {

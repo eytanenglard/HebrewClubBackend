@@ -4,14 +4,15 @@ import Section from '../../../models/Section';
 import { Section as SectionType, SectionData, ApiResponse } from '../../../types/models';
 import mongoose from 'mongoose';
 
-export const createSection = async (req: Request, res: Response) => {
+export const createSection = async (req: Request, res: Response): Promise<void> => {
   try {
     const courseId = new mongoose.Types.ObjectId(req.params.courseId);
     const sectionData: SectionData = req.body;
 
     const course = await Course.findById(courseId);
     if (!course) {
-      return res.status(404).json({ success: false, error: 'Course not found' } as ApiResponse<null>);
+      res.status(404).json({ success: false, error: 'Course not found' } as ApiResponse<null>);
+      return;
     }
 
     const newSection = new Section({
@@ -34,12 +35,13 @@ export const createSection = async (req: Request, res: Response) => {
   }
 };
 
-export const getSection = async (req: Request, res: Response) => {
+export const getSection = async (req: Request, res: Response): Promise<void> => {
   try {
     const sectionId = new mongoose.Types.ObjectId(req.params.id);
     const section = await Section.findById(sectionId).populate('lessons');
     if (!section) {
-      return res.status(404).json({ success: false, error: 'Section not found' } as ApiResponse<null>);
+      res.status(404).json({ success: false, error: 'Section not found' } as ApiResponse<null>);
+      return;
     }
     res.json({ success: true, data: section } as ApiResponse<SectionType>);
   } catch (error) {
@@ -48,14 +50,15 @@ export const getSection = async (req: Request, res: Response) => {
   }
 };
 
-export const updateSection = async (req: Request, res: Response) => {
+export const updateSection = async (req: Request, res: Response): Promise<void> => {
   try {
     const sectionId = new mongoose.Types.ObjectId(req.params.id);
     const updateData: Partial<SectionData> = req.body;
 
     const section = await Section.findByIdAndUpdate(sectionId, updateData, { new: true });
     if (!section) {
-      return res.status(404).json({ success: false, error: 'Section not found' } as ApiResponse<null>);
+      res.status(404).json({ success: false, error: 'Section not found' } as ApiResponse<null>);
+      return;
     }
     res.json({ 
       success: true, 
@@ -67,13 +70,14 @@ export const updateSection = async (req: Request, res: Response) => {
   }
 };
 
-export const deleteSection = async (req: Request, res: Response) => {
+export const deleteSection = async (req: Request, res: Response): Promise<void> => {
   try {
     const sectionId = new mongoose.Types.ObjectId(req.params.id);
 
     const section = await Section.findByIdAndDelete(sectionId);
     if (!section) {
-      return res.status(404).json({ success: false, error: 'Section not found' } as ApiResponse<null>);
+      res.status(404).json({ success: false, error: 'Section not found' } as ApiResponse<null>);
+      return;
     }
 
     await Course.findByIdAndUpdate(
@@ -88,7 +92,7 @@ export const deleteSection = async (req: Request, res: Response) => {
   }
 };
 
-export const getSections = async (req: Request, res: Response) => {
+export const getSections = async (req: Request, res: Response): Promise<void> => {
   try {
     const courseId = new mongoose.Types.ObjectId(req.params.courseId);
     const sections = await Section.find({ courseId }).populate('lessons');
