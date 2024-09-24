@@ -4,7 +4,7 @@ import { Request, Response } from 'express';
 import Course from '../models/Course';
 import { ApiResponse, PaginatedResponse } from '../types/models';
 
-export const getCourses = async (req: Request, res: Response) => {
+export const getCourses = async (req: Request, res: Response): Promise<void> => {
   try {
     const page = parseInt(req.query.page as string) || 1;
     const limit = parseInt(req.query.limit as string) || 10;
@@ -36,11 +36,12 @@ export const getCourses = async (req: Request, res: Response) => {
   }
 };
 
-export const getCourseById = async (req: Request, res: Response) => {
+export const getCourseById = async (req: Request, res: Response): Promise<void> => {
   try {
     const course = await Course.findById(req.params.id).populate('instructor', 'name');
     if (!course) {
-      return res.status(404).json({ success: false, error: 'Course not found' } as ApiResponse<null>);
+      res.status(404).json({ success: false, error: 'Course not found' } as ApiResponse<null>);
+      return;
     }
     res.json({ success: true, data: course } as ApiResponse<typeof course>);
   } catch (error) {
@@ -49,7 +50,7 @@ export const getCourseById = async (req: Request, res: Response) => {
   }
 };
 
-export const createCourse = async (req: Request, res: Response) => {
+export const createCourse = async (req: Request, res: Response): Promise<void> => {
   try {
     const newCourse = new Course(req.body);
     await newCourse.save();
@@ -60,11 +61,12 @@ export const createCourse = async (req: Request, res: Response) => {
   }
 };
 
-export const updateCourse = async (req: Request, res: Response) => {
+export const updateCourse = async (req: Request, res: Response): Promise<void> => {
   try {
     const updatedCourse = await Course.findByIdAndUpdate(req.params.id, req.body, { new: true });
     if (!updatedCourse) {
-      return res.status(404).json({ success: false, error: 'Course not found' } as ApiResponse<null>);
+      res.status(404).json({ success: false, error: 'Course not found' } as ApiResponse<null>);
+      return;
     }
     res.json({ success: true, data: updatedCourse } as ApiResponse<typeof updatedCourse>);
   } catch (error) {
@@ -73,11 +75,12 @@ export const updateCourse = async (req: Request, res: Response) => {
   }
 };
 
-export const deleteCourse = async (req: Request, res: Response) => {
+export const deleteCourse = async (req: Request, res: Response): Promise<void> => {
   try {
     const deletedCourse = await Course.findByIdAndDelete(req.params.id);
     if (!deletedCourse) {
-      return res.status(404).json({ success: false, error: 'Course not found' } as ApiResponse<null>);
+      res.status(404).json({ success: false, error: 'Course not found' } as ApiResponse<null>);
+      return;
     }
     res.json({ success: true, message: 'Course deleted successfully' } as ApiResponse<null>);
   } catch (error) {

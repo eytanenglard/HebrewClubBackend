@@ -5,6 +5,7 @@ import Lead from '../models/Lead';
 import User from '../models/User';
 import { Course as CourseType, Lead as LeadType, ApiResponse } from '../types/models';
 import { sendCourseWelcomeEmail } from '../utils/emailService';
+
 // Helper function to convert _id to string
 const convertIdToString = (doc: any) => {
   const convertedDoc = doc.toObject();
@@ -20,7 +21,7 @@ const toObjectId = (id: string | mongoose.Types.ObjectId): mongoose.Types.Object
   return typeof id === 'string' ? new mongoose.Types.ObjectId(id) : id;
 };
 
-export const enrollInCourse = async (req: Request, res: Response) => {
+export const enrollInCourse = async (req: Request, res: Response): Promise<void> => {
   try {
     const leadData: Partial<LeadType> = req.body;
     
@@ -28,10 +29,11 @@ export const enrollInCourse = async (req: Request, res: Response) => {
 
     // Validate required fields
     if (!leadData.name || !leadData.email || !leadData.phone || !leadData.courseInterest) {
-      return res.status(400).json({
+      res.status(400).json({
         success: false,
         error: 'Missing required fields'
       } as ApiResponse<null>);
+      return;
     }
 
     // Remove _id from leadData if it exists
@@ -48,10 +50,11 @@ export const enrollInCourse = async (req: Request, res: Response) => {
       console.log('Validated courseInterest:', leadData.courseInterest);
 
       if (leadData.courseInterest.length === 0) {
-        return res.status(400).json({
+        res.status(400).json({
           success: false,
           error: 'Invalid courseInterest'
         } as ApiResponse<null>);
+        return;
       }
     }
 
@@ -91,10 +94,11 @@ export const enrollInCourse = async (req: Request, res: Response) => {
       console.log('Lead saved successfully:', JSON.stringify(lead, null, 2));
     } catch (error) {
       console.error('Error saving lead:', error);
-      return res.status(400).json({
+      res.status(400).json({
         success: false,
         error: 'Error saving lead: ' + (error instanceof Error ? error.message : 'Unknown error')
       } as ApiResponse<null>);
+      return;
     }
 
     // Convert _id to string before sending the response
@@ -117,24 +121,27 @@ export const enrollInCourse = async (req: Request, res: Response) => {
     } as ApiResponse<null>);
   }
 };
-export const getCourseEnrollment = async (req: Request, res: Response) => {
+
+export const getCourseEnrollment = async (req: Request, res: Response): Promise<void> => {
   try {
     const leadId = req.params.id;
 
     if (!mongoose.Types.ObjectId.isValid(leadId)) {
-      return res.status(400).json({
+      res.status(400).json({
         success: false,
         error: 'Invalid lead ID'
       } as ApiResponse<null>);
+      return;
     }
 
     const lead = await Lead.findById(toObjectId(leadId));
 
     if (!lead) {
-      return res.status(404).json({
+      res.status(404).json({
         success: false,
         error: 'Lead not found'
       } as ApiResponse<null>);
+      return;
     }
 
     // Convert _id to string before sending the response
@@ -153,16 +160,17 @@ export const getCourseEnrollment = async (req: Request, res: Response) => {
   }
 };
 
-export const updateCourseEnrollment = async (req: Request, res: Response) => {
+export const updateCourseEnrollment = async (req: Request, res: Response): Promise<void> => {
   try {
     const leadId = req.params.id;
     const updateData: Partial<LeadType> = req.body;
 
     if (!mongoose.Types.ObjectId.isValid(leadId)) {
-      return res.status(400).json({
+      res.status(400).json({
         success: false,
         error: 'Invalid lead ID'
       } as ApiResponse<null>);
+      return;
     }
 
     // If courseInterest is provided, ensure it's an array of valid ObjectIds
@@ -174,10 +182,11 @@ export const updateCourseEnrollment = async (req: Request, res: Response) => {
       updateData.courseInterest = courseInterests.filter(id => mongoose.Types.ObjectId.isValid(id.toString()));
 
       if (updateData.courseInterest.length === 0) {
-        return res.status(400).json({
+        res.status(400).json({
           success: false,
           error: 'Invalid courseInterest'
         } as ApiResponse<null>);
+        return;
       }
     }
 
@@ -188,10 +197,11 @@ export const updateCourseEnrollment = async (req: Request, res: Response) => {
     );
 
     if (!updatedLead) {
-      return res.status(404).json({
+      res.status(404).json({
         success: false,
         error: 'Lead not found'
       } as ApiResponse<null>);
+      return;
     }
 
     // Convert _id to string before sending the response
@@ -211,7 +221,7 @@ export const updateCourseEnrollment = async (req: Request, res: Response) => {
   }
 };
 
-export const getAllCourses = async (req: Request, res: Response) => {
+export const getAllCourses = async (req: Request, res: Response): Promise<void> => {
   try {
     const courses = await Course.find({});
 
@@ -231,24 +241,26 @@ export const getAllCourses = async (req: Request, res: Response) => {
   }
 };
 
-export const getCourseDetails = async (req: Request, res: Response) => {
+export const getCourseDetails = async (req: Request, res: Response): Promise<void> => {
   try {
     const courseId = req.params.id;
 
     if (!mongoose.Types.ObjectId.isValid(courseId)) {
-      return res.status(400).json({
+      res.status(400).json({
         success: false,
         error: 'Invalid course ID'
       } as ApiResponse<null>);
+      return;
     }
 
     const course = await Course.findById(toObjectId(courseId));
 
     if (!course) {
-      return res.status(404).json({
+      res.status(404).json({
         success: false,
         error: 'Course not found'
       } as ApiResponse<null>);
+      return;
     }
 
     // Convert _id to string before sending the response
@@ -267,32 +279,35 @@ export const getCourseDetails = async (req: Request, res: Response) => {
   }
 };
 
-export const associateCourseWithUser = async (req: Request, res: Response) => {
+export const associateCourseWithUser = async (req: Request, res: Response): Promise<void> => {
   try {
     const { userId, courseId } = req.body;
 
     if (!mongoose.Types.ObjectId.isValid(userId) || !mongoose.Types.ObjectId.isValid(courseId)) {
-      return res.status(400).json({
+      res.status(400).json({
         success: false,
         error: 'Invalid user ID or course ID'
       } as ApiResponse<null>);
+      return;
     }
 
     const user = await User.findById(toObjectId(userId));
     const course = await Course.findById(toObjectId(courseId));
 
     if (!user || !course) {
-      return res.status(404).json({
+      res.status(404).json({
         success: false,
         error: 'User or course not found'
       } as ApiResponse<null>);
+      return;
     }
 
     if (user.courses && user.courses.some(id => id.equals(toObjectId(courseId)))) {
-      return res.status(400).json({
+      res.status(400).json({
         success: false,
         error: 'Course is already associated with the user'
       } as ApiResponse<null>);
+      return;
     }
 
     user.courses = user.courses || [];
@@ -320,6 +335,7 @@ export const associateCourseWithUser = async (req: Request, res: Response) => {
     } as ApiResponse<null>);
   }
 }; 
+
 export default {
   enrollInCourse,
   getCourseEnrollment,

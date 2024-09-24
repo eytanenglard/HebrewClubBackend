@@ -14,7 +14,6 @@ import {
   verifyEmail, // Add this new import
   resendVerificationEmail // Add this new import
 } from '../controllers/authController';
-import { createLead } from '../controllers/leadController';
 
 const router = express.Router();
 
@@ -53,4 +52,5 @@ router.post('/forgot-password', validateForgotPassword, forgotPassword);
 router.post('/reset-password', validateResetPassword, resetPassword);
 router.post('/verify-email', verifyEmail);
 router.post('/resend-verification', resendVerificationEmail);
+
 export default router;

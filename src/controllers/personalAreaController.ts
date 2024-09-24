@@ -2,8 +2,8 @@ import { Request, Response, NextFunction } from 'express';
 import mongoose from 'mongoose';
 import User, { UserDocument } from '../models/User';
 import Course from '../models/Course';
-import { EditableUserProfile, ApiResponse, PaginatedResponse,  Course as CourseType } from '../types/models';
-import { sendPasswordResetEmail } from '../utils/emailService';
+import { EditableUserProfile, ApiResponse, PaginatedResponse} from '../types/models';
+import { sendPasswordResetEmail } from './emailController';
 import crypto from 'crypto';
 
 // Extend the Express Request type
@@ -16,16 +16,7 @@ type AsyncRouteHandler = (
   req: Request,
   res: Response,
   next: NextFunction
-) => Promise<any>;
-
-// Wrapper to catch async errors
-const asyncHandler = (fn: AsyncRouteHandler) => (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
-  Promise.resolve(fn(req, res, next)).catch(next);
-};
+) => Promise<void>;
 
 // Helper function to format user response
 const formatUserResponse = (user: UserDocument): EditableUserProfile => ({
@@ -58,45 +49,37 @@ const sendResponse = <T>(res: Response, data: T, message?: string): void => {
   res.json(response);
 };
 
-// Updated helper function to convert string or ObjectId to ObjectId
-const toObjectId = (id: string | mongoose.Types.ObjectId): mongoose.Types.ObjectId => {
-  return typeof id === 'string' ? new mongoose.Types.ObjectId(id) : id;
-};
-
-// Helper function to convert _id to string
-const convertIdToString = (doc: any) => {
-  const convertedDoc = doc.toObject();
-  convertedDoc._id = convertedDoc._id.toString();
-  return convertedDoc;
-};
-
 // Get user profile
-export const getUserProfile = asyncHandler(async (req: Request, res: Response) => {
+export const getUserProfile: AsyncRouteHandler = async (req: Request, res: Response) => {
   const userId = (req as RequestWithUser).user?._id;
   
   if (!userId) {
-    return res.status(401).json({ success: false, message: 'Unauthorized' } as ApiResponse<null>);
+    res.status(401).json({ success: false, message: 'Unauthorized' } as ApiResponse<null>);
+    return;
   }
 
   const user = await User.findById(userId).select('-password');
   if (!user) {
-    return res.status(404).json({ success: false, message: 'User not found' } as ApiResponse<null>);
+    res.status(404).json({ success: false, message: 'User not found' } as ApiResponse<null>);
+    return;
   }
 
   sendResponse(res, formatUserResponse(user));
-});
+};
 
 // Update user profile
-export const updateUserProfile = asyncHandler(async (req: Request, res: Response) => {
+export const updateUserProfile: AsyncRouteHandler = async (req: Request, res: Response) => {
   const userId = (req as RequestWithUser).user?._id;
   if (!userId) {
-    return res.status(401).json({ success: false, message: 'Unauthorized' } as ApiResponse<null>);
+    res.status(401).json({ success: false, message: 'Unauthorized' } as ApiResponse<null>);
+    return;
   }
 
   const { name, email, phone, dateOfBirth, address, city, country, bio } = req.body;
   const user = await User.findById(userId);
   if (!user) {
-    return res.status(404).json({ success: false, message: 'User not found' } as ApiResponse<null>);
+    res.status(404).json({ success: false, message: 'User not found' } as ApiResponse<null>);
+    return;
   }
 
   if (name) user.name = name;
@@ -110,13 +93,14 @@ export const updateUserProfile = asyncHandler(async (req: Request, res: Response
 
   await user.save();
   sendResponse(res, formatUserResponse(user), 'Profile updated successfully');
-});
+};
 
 // Get user courses
-export const getUserCourses = asyncHandler(async (req: Request, res: Response) => {
+export const getUserCourses: AsyncRouteHandler = async (req: Request, res: Response) => {
   const userId = (req as RequestWithUser).user?._id;
   if (!userId) {
-    return res.status(401).json({ success: false, message: 'Unauthorized' } as ApiResponse<null>);
+    res.status(401).json({ success: false, message: 'Unauthorized' } as ApiResponse<null>);
+    return;
   }
 
   const page = parseInt(req.query.page as string) || 1;
@@ -124,7 +108,8 @@ export const getUserCourses = asyncHandler(async (req: Request, res: Response) =
 
   const user = await User.findById(userId);
   if (!user) {
-    return res.status(404).json({ success: false, message: 'User not found' } as ApiResponse<null>);
+    res.status(404).json({ success: false, message: 'User not found' } as ApiResponse<null>);
+    return;
   }
 
   const total = user.courses.length;
@@ -149,62 +134,70 @@ export const getUserCourses = asyncHandler(async (req: Request, res: Response) =
   };
 
   res.json(response);
-});
+};
 
 // Update user password
-export const updateUserPassword = asyncHandler(async (req: Request, res: Response) => {
+export const updateUserPassword: AsyncRouteHandler = async (req: Request, res: Response) => {
   const userId = (req as RequestWithUser).user?._id;
   if (!userId) {
-    return res.status(401).json({ success: false, message: 'Unauthorized' } as ApiResponse<null>);
+    res.status(401).json({ success: false, message: 'Unauthorized' } as ApiResponse<null>);
+    return;
   }
 
   const { currentPassword, newPassword } = req.body;
   const user = await User.findById(userId);
   if (!user) {
-    return res.status(404).json({ success: false, message: 'User not found' } as ApiResponse<null>);
+    res.status(404).json({ success: false, message: 'User not found' } as ApiResponse<null>);
+    return;
   }
 
   const isMatch = await user.comparePassword(currentPassword);
   if (!isMatch) {
-    return res.status(400).json({ success: false, message: 'Current password is incorrect' } as ApiResponse<null>);
+    res.status(400).json({ success: false, message: 'Current password is incorrect' } as ApiResponse<null>);
+    return;
   }
 
   user.password = newPassword;
   await user.save();
 
   sendResponse(res, null, 'Password updated successfully');
-});
+};
 
 // Delete user account
-export const deleteUserAccount = asyncHandler(async (req: Request, res: Response) => {
+export const deleteUserAccount: AsyncRouteHandler = async (req: Request, res: Response) => {
   const userId = (req as RequestWithUser).user?._id;
   if (!userId) {
-    return res.status(401).json({ success: false, message: 'Unauthorized' } as ApiResponse<null>);
+    res.status(401).json({ success: false, message: 'Unauthorized' } as ApiResponse<null>);
+    return;
   }
 
   const deletedUser = await User.findByIdAndDelete(userId);
   if (!deletedUser) {
-    return res.status(404).json({ success: false, message: 'User not found' } as ApiResponse<null>);
+    res.status(404).json({ success: false, message: 'User not found' } as ApiResponse<null>);
+    return;
   }
   sendResponse(res, null, 'User account deleted successfully');
-});
+};
 
-export const initiatePasswordReset = asyncHandler(async (req: Request, res: Response) => {
+export const initiatePasswordReset: AsyncRouteHandler = async (req: Request, res: Response) => {
   const userId = (req as RequestWithUser).user?._id;
   if (!userId) {
-    return res.status(401).json({ success: false, message: 'Unauthorized' } as ApiResponse<null>);
+    res.status(401).json({ success: false, message: 'Unauthorized' } as ApiResponse<null>);
+    return;
   }
 
   const user = await User.findById(userId);
   if (!user) {
-    return res.status(404).json({ success: false, message: 'User not found' } as ApiResponse<null>);
+    res.status(404).json({ success: false, message: 'User not found' } as ApiResponse<null>);
+    return;
   }
 
   if (user.passwordResetAttempts >= 3) {
     user.isLocked = true;
     user.lockUntil = new Date(Date.now() + 24 * 60 * 60 * 1000); // Lock for 24 hours
     await user.save();
-    return res.status(403).json({ success: false, message: 'Too many reset attempts. Account locked for 24 hours.' } as ApiResponse<null>);
+    res.status(403).json({ success: false, message: 'Too many reset attempts. Account locked for 24 hours.' } as ApiResponse<null>);
+    return;
   }
 
   const resetToken = crypto.randomBytes(20).toString('hex');
@@ -222,18 +215,19 @@ export const initiatePasswordReset = asyncHandler(async (req: Request, res: Resp
     await user.save();
     res.status(500).json({ success: false, message: 'Error sending password reset email' } as ApiResponse<null>);
   }
-});
+};
 
 // Get course details (added from courseEnrollmentController)
 // Updated getCourseDetails function
-export const getCourseDetails = asyncHandler(async (req: Request, res: Response) => {
+export const getCourseDetails: AsyncRouteHandler = async (req: Request, res: Response) => {
   const courseId = req.params.id;
 
   if (!mongoose.Types.ObjectId.isValid(courseId)) {
-    return res.status(400).json({
+    res.status(400).json({
       success: false,
       error: 'Invalid course ID'
     } as ApiResponse<null>);
+    return;
   }
 
   const course = await Course.findById(courseId)
@@ -253,10 +247,11 @@ export const getCourseDetails = asyncHandler(async (req: Request, res: Response)
     .lean();
 
   if (!course) {
-    return res.status(404).json({
+    res.status(404).json({
       success: false,
       error: 'Course not found'
     } as ApiResponse<null>);
+    return;
   }
 
   // Convert _id to string for all nested objects
@@ -278,7 +273,7 @@ export const getCourseDetails = asyncHandler(async (req: Request, res: Response)
   const convertedCourse = convertIds(course);
 
   sendResponse(res, convertedCourse, 'Course details retrieved successfully');
-});
+};
 
 export default {
   getUserProfile,

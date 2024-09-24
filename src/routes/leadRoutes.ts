@@ -3,6 +3,6 @@ import { createLead } from '../controllers/leadController';
 
 const router = express.Router();
 
-router.post('/leads', createLead);
+router.post('/', createLead);
 
 export default router;
