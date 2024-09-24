@@ -1,5 +1,5 @@
 import mongoose, { Schema, Document } from 'mongoose';
-import { Course, InstructorInfo } from '../types/models';
+import { Course} from '../types/models';
 
 const InstructorInfoSchema: Schema = new Schema({
   _id: { type: Schema.Types.ObjectId, auto: true },
