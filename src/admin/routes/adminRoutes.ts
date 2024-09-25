@@ -13,10 +13,10 @@ import {
   setUserRole,
   addCourseToUser,
   removeCourseFromUser
-} from '../Controllers/adminControllers';
+} from '../Controllers/adminControllers.js';
 
-import courseContentRoutes from './courseContentRoutes';
-import leadRoutes from './adminleadRoutes';
+import courseContentRoutes from './courseContentRoutes.js';
+import leadRoutes from './adminleadRoutes.js';
 
 console.log('Admin routes loaded');
 

@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
-import Lead from '../../models/Lead';
-import { PaginatedResponse, ApiResponse } from '../../types/models';
+import Lead from '../../models/Lead.js';
+import { PaginatedResponse, ApiResponse } from '../../types/models.js';
 
 export const getLeads = async (req: Request, res: Response): Promise<void> => {
   try {

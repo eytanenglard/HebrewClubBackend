@@ -7,12 +7,12 @@ import {
   updateCourseStructure,
   getInstructors,
   getUsersCourse
-} from './CourseContentController/CourseController';
+} from './CourseContentController/CourseController.js';
 
 import {
   addUserToCourse,
   removeUserFromCourse
-} from './CourseContentController/CourseUserController';
+} from './CourseContentController/CourseUserController.js';
 
 import {
   createSection,
@@ -20,7 +20,7 @@ import {
   deleteSection,
   getSection,
   getSections
-} from './CourseContentController/SectionController';
+} from './CourseContentController/SectionController.js';
 
 import {
   createLesson,
@@ -28,14 +28,14 @@ import {
   deleteLesson,
   getLesson,
   getLessons
-} from './CourseContentController/LessonController';
+} from './CourseContentController/LessonController.js';
 
 import {
   addContent,
   updateContent,
   deleteContent,
   getContentItems
-} from './CourseContentController/ContentController';
+} from './CourseContentController/ContentController.js';
 
 import { 
   getUsers, 
@@ -45,13 +45,13 @@ import {
   setUserRole, 
   addCourseToUser,
   removeCourseFromUser
-} from './adminUserController';
+} from './adminUserController.js';
 
 import { 
   createLead, 
   updateLead, 
   deleteLead 
-} from './adminLeadController';
+} from './adminLeadController.js';
 
 
 

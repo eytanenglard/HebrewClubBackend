@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
-import Lesson from '../../../models/Lesson';
-import { ContentItemModel } from '../../../models/Lesson';
-import { ContentItem as ContentItemType, ApiResponse } from '../../../types/models';
+import Lesson from '../../../models/Lesson.js';
+import { ContentItemModel } from '../../../models/Lesson.js';
+import { ContentItem as ContentItemType, ApiResponse } from '../../../types/models.js';
 
 const LOG_PREFIX = '[CourseContentController]';
 

@@ -24,7 +24,7 @@ import {
   getSections,
   getInstructors,
   getUsersCourse,
-} from '../Controllers/adminControllers';
+} from '../Controllers/adminControllers.js';
 
 const router = express.Router();
 

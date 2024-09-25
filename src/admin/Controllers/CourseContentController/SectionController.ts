@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
-import Course from '../../../models/Course';
-import Section from '../../../models/Section';
-import { Section as SectionType, SectionData, ApiResponse } from '../../../types/models';
+import Course from '../../../models/Course.js';
+import Section from '../../../models/Section.js';
+import { Section as SectionType, SectionData, ApiResponse } from '../../../types/models.js';
 import mongoose from 'mongoose';
 
 export const createSection = async (req: Request, res: Response): Promise<void> => {

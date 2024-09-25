@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
-import Payment from '../../models/Payment';
-import { Payment as PaymentType, ApiResponse } from '../../types/models';
+import Payment from '../../models/Payment.js';
+import { Payment as PaymentType, ApiResponse } from '../../types/models.js';
 
 export const getPaymentManagementData = async (res: Response): Promise<void> => {
   try {

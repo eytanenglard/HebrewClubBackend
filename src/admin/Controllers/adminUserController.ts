@@ -1,8 +1,8 @@
 import { Request, Response } from 'express';
-import User from '../../models/User';
-import Course from '../../models/Course';
+import User from '../../models/User.js';
+import Course from '../../models/Course.js';
 import bcrypt from 'bcryptjs';
-import { User as UserType, ApiResponse, PaginatedResponse, UserRole, EnhancedUser } from '../../types/models';
+import { User as UserType, ApiResponse, PaginatedResponse, UserRole, EnhancedUser } from '../../types/models.js';
 import mongoose from "mongoose";
 
 const getCourseTitle = async (courseId: mongoose.Types.ObjectId | string): Promise<string> => {

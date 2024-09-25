@@ -1,5 +1,5 @@
 import express from 'express';
-import { getLeads, createLead, updateLead, deleteLead } from '../Controllers/adminLeadController';
+import { getLeads, createLead, updateLead, deleteLead } from '../Controllers/adminLeadController.js';
 
 const router = express.Router();
 
