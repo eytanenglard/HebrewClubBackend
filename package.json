@@ -6,9 +6,9 @@
   "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node dist/app.js",
-    "start:prod": "node dist/app.js",
-    "dev": "nodemon --exec \"npx ts-node --transpile-only src/app.ts\"",
+    "start": "node --experimental-specifier-resolution=node dist/app.js",
+    "start:prod": "node --experimental-specifier-resolution=node dist/app.js",
+    "dev": "nodemon --exec \"npx ts-node --esm src/app.ts\"",
     "build": "tsc",
     "heroku-postbuild": "npm run build"
   },
@@ -42,7 +42,8 @@
     "passport-facebook": "^3.0.0",
     "passport-google-oauth20": "^2.0.0",
     "speakeasy": "^2.0.0",
-    "uuid": "^10.0.0"
+    "uuid": "^10.0.0",
+    "typescript": "^5.5.4"
   },
   "devDependencies": {
     "@types/bcrypt": "^5.0.2",
@@ -63,7 +64,6 @@
     "@types/passport-google-oauth20": "^2.0.16",
     "@types/speakeasy": "^2.0.10",
     "@types/uuid": "^10.0.0",
-    "typescript": "^5.5.4",
     "nodemon": "^3.1.4",
     "ts-node": "^10.9.1"
   }
