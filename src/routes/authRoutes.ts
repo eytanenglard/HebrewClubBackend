@@ -1,7 +1,7 @@
 import express from 'express';
 import { body, ValidationChain } from 'express-validator';
 import { 
-/*   csrfTokenHandler, */ 
+ csrfTokenHandler,
   registerUser, 
   loginUser, 
   logoutUser, 
@@ -40,7 +40,7 @@ const validateResetPassword: ValidationChain[] = [
 ];
 
 // Routes
-/* router.get('/csrf-token', csrfTokenHandler); */
+router.get('/csrf-token', csrfTokenHandler);
 router.get('/checkAuth', checkAuth);
 router.post('/register', validateRegistration, registerUser);
 router.post('/login', validateLogin, loginUser);
