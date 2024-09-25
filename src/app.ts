@@ -54,9 +54,6 @@ app.use(cookieParser());
 app.use(helmet());
 app.use(logger);
 
-// Serve static files from the 'public' directory
-app.use(express.static(path.join(__dirname, 'public')));
-
 // Define rate limits for specific routes
 const authRateLimiter = rateLimit({
   windowMs: 60 * 60 * 1000, // 1 hour window
