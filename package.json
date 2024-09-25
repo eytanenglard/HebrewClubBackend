@@ -7,7 +7,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node --experimental-specifier-resolution=node dist/app.js",
-    "start:prod": "node --experimental-specifier-resolution=node dist/app.js",
+    "start:prod": "node --experimental-modules --experimental-specifier-resolution=node dist/app.js",
     "dev": "nodemon --exec \"npx ts-node --esm src/app.ts\"",
     "build": "tsc",
     "heroku-postbuild": "npm run build"

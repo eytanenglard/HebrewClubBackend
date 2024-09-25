@@ -1,0 +1,10 @@
+import { Request, Response } from 'express';
+import { createCourse, updateCourse, deleteCourse, getCourseManagementData, getCourseContent, updateCourseStructure, getInstructors, getUsersCourse } from './CourseContentController/CourseController';
+import { addUserToCourse, removeUserFromCourse } from './CourseContentController/CourseUserController';
+import { createSection, updateSection, deleteSection, getSection, getSections } from './CourseContentController/SectionController';
+import { createLesson, updateLesson, deleteLesson, getLesson, getLessons } from './CourseContentController/LessonController';
+import { addContent, updateContent, deleteContent, getContentItems } from './CourseContentController/ContentController';
+import { getUsers, createUser, updateUser, deleteUser, setUserRole, toggleUserStatus, addUserToGroup, removeUserFromGroup, exportUsers, importUsers, resetUserPassword, getUserActivity, updateUserStatus, getUserStats, addCourseToUser, removeCourseFromUser } from './adminUserController';
+import { getLeadManagementData, createLead, updateLead, deleteLead } from './adminLeadController';
+declare const getDashboardStats: (req: Request, res: Response) => Promise<void>;
+export { getCourseContent, createCourse, updateCourse, deleteCourse, getCourseManagementData, addUserToCourse, removeUserFromCourse, updateCourseStructure, getInstructors, getUsersCourse, createSection, updateSection, deleteSection, getSection, getSections, createLesson, updateLesson, deleteLesson, getLesson, getLessons, addContent, updateContent, deleteContent, getContentItems, getUsers, createUser, updateUser, deleteUser, setUserRole, toggleUserStatus, addUserToGroup, removeUserFromGroup, exportUsers, importUsers, resetUserPassword, getUserActivity, updateUserStatus, getUserStats, addCourseToUser, removeCourseFromUser, getLeadManagementData, createLead, updateLead, deleteLead, getDashboardStats };

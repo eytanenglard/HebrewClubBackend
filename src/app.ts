@@ -6,8 +6,9 @@ import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
-import { validateCsrfToken, getCsrfToken } from './middleware/csrfProtection';
-
+console.log('Attempting to import csrfProtection');
+import { validateCsrfToken, getCsrfToken } from './middleware/csrfProtection.js';
+console.log('csrfProtection imported successfully');
 // General Routes
 import authRoutes from './routes/authRoutes';
 import leadRoutes from './routes/leadRoutes';
