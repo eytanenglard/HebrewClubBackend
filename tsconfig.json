@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
     "target": "es2018",
-    "module": "ES2020",
+    "module": "ESNext",
     "lib": ["es2018", "dom"],
     "outDir": "./dist",
     "rootDir": "./src",
@@ -32,7 +32,10 @@
     "allowSyntheticDefaultImports": true,
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
-    "allowJs": true
+    "allowJs": true,
+    "removeComments": true,
+    "importHelpers": true,
+    "isolatedModules": true
   },
   "include": [
     "src/**/*"
@@ -41,5 +44,9 @@
     "node_modules",
     "**/*.spec.ts",
     "dist"
-  ]
+  ],
+  "ts-node": {
+    "esm": true,
+    "experimentalSpecifierResolution": "node"
+  }
 }

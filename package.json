@@ -7,8 +7,8 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node --experimental-specifier-resolution=node dist/app.js",
-    "dev": "nodemon --exec \"npx ts-node --esm src/app.ts\"",
-    "build": "tsc && cp -r src/middleware dist/middleware",
+    "dev": "nodemon --exec \"node --loader ts-node/esm src/app.ts\"",
+    "build": "tsc && node --eval \"const { copyFileSync, mkdirSync } = require('fs'); const { join } = require('path'); try { mkdirSync(join('dist', 'middleware'), { recursive: true }); copyFileSync(join('src', 'middleware', 'csrfProtection.ts'), join('dist', 'middleware', 'csrfProtection.js')); } catch (error) { console.error('Error during build:', error); process.exit(1); }\"",
     "heroku-postbuild": "npm run build"
   },
   "keywords": [],
