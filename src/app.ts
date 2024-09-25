@@ -71,6 +71,7 @@ const csrfBypassPaths = [
   '/api/email/contact-form',
   '/api/email/welcome-with-course',
   '/auth/forgot-password',
+  '/api/leads',
 ];
 
 // Custom middleware to apply CSRF selectively
