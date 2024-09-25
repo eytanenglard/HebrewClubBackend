@@ -2,7 +2,7 @@ import jwt from 'jsonwebtoken';
 import { Request, Response } from 'express';
 import User from '../models/User';
 import { User as UserType, ApiResponse, UserRole } from '../types/models';
-import { getCsrfToken } from '../middleware/csrfProtection';
+import { getCsrfToken } from '../csrfProtection';
 import crypto from 'crypto';
 import dotenv from 'dotenv';
 import UserModel, { UserDocument } from '../models/User';
@@ -89,10 +89,14 @@ export const registerUser = async (req: Request, res: Response): Promise<void> =
   }
 };
 
+import { Types } from 'mongoose';
+
+// ... (קוד קודם נשאר ללא שינוי)
+
 export const verifyEmail = async (req: Request, res: Response): Promise<void> => {
   try {
     const { token, code } = req.body;
-    let user;
+    let user: UserDocument | null;
 
     if (token) {
       user = await User.findOne({
@@ -104,6 +108,9 @@ export const verifyEmail = async (req: Request, res: Response): Promise<void> =>
         emailVerificationCode: code,
         emailVerificationExpires: { $gt: Date.now() }
       });
+    } else {
+      res.status(400).json({ success: false, error: 'Invalid request' });
+      return;
     }
 
     if (!user) {
@@ -117,7 +124,9 @@ export const verifyEmail = async (req: Request, res: Response): Promise<void> =>
     user.emailVerificationExpires = undefined;
     await user.save();
 
-    const jwtToken = createToken(user._id.toString());
+    // השינוי העיקרי הוא כאן:
+    const jwtToken = createToken((user._id as Types.ObjectId).toString());
+
     res.status(200).json({ 
       success: true, 
       message: 'Email verified successfully',
@@ -202,7 +211,7 @@ export const loginUser = async (req: Request, res: Response): Promise<void> => {
     }
 
     console.log(`${LOG_PREFIX} Password match successful for user: ${user._id}`);
-    const token = createToken(user._id.toString());
+    const token = createToken((user._id as Types.ObjectId).toString());
     res.cookie('accessToken', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
@@ -229,7 +238,7 @@ export const loginUser = async (req: Request, res: Response): Promise<void> => {
   }
 };
 
-export const logoutUser = (req: Request, res: Response): void => {
+export const logoutUser = (res: Response): void => {
   console.log(`${LOG_PREFIX} Logging out user`);
   res.clearCookie('accessToken');
   res.json({ success: true, message: 'Logged out successfully' } as ApiResponse<null>);
@@ -498,11 +507,11 @@ export const resetPassword = async (req: Request, res: Response): Promise<void> 
     }
 
     user.password = newPassword;
-    user.passwordResetToken = null;
-    user.passwordResetExpires = null;
+    user.passwordResetToken = undefined;
+    user.passwordResetExpires = undefined;
     user.passwordResetAttempts = 0;
     user.isLocked = false;
-    user.lockUntil = null;
+    user.lockUntil = undefined;
     await user.save();
 
     res.status(200).json({ success: true, message: 'Password has been reset' });

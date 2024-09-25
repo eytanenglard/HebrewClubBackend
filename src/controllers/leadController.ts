@@ -21,7 +21,7 @@ export const createLead = async (req: Request, res: Response) => {
   }
 };
 
-export const getLeads = async (req: Request, res: Response) => {
+export const getLeads = async (res: Response) => {
   try {
     const leads = await Lead.find();
     res.json({ success: true, data: leads } as ApiResponse<LeadType[]>);

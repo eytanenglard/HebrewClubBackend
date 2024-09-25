@@ -221,7 +221,7 @@ export const updateCourseEnrollment = async (req: Request, res: Response): Promi
   }
 };
 
-export const getAllCourses = async (req: Request, res: Response): Promise<void> => {
+export const getAllCourses = async (res: Response): Promise<void> => {
   try {
     const courses = await Course.find({});
 

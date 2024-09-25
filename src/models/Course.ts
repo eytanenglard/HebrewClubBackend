@@ -57,7 +57,7 @@ const CourseSchema: Schema = new Schema({
 
 CourseSchema.pre('save', function(next) {
   if (this.isNew) {
-    this.courseId = this._id.toString();
+    (this as any).courseId = (this as any)._id.toString();
   }
   next();
 });

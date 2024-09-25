@@ -7,24 +7,21 @@ import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 console.log('Attempting to import csrfProtection');
-import { validateCsrfToken, getCsrfToken } from './middleware/csrfProtection';
+import { validateCsrfToken, getCsrfToken } from './csrfProtection.js';
 console.log('csrfProtection imported successfully');
 // General Routes
-import authRoutes from './routes/authRoutes';
-import leadRoutes from './routes/leadRoutes';
-import personalAreaRoutes from './routes/personalAreaRoutes';
-import courseEnrollmentRoutes from './routes/courseEnrollmentRoutes'; // New import
+import authRoutes from './routes/authRoutes.js';
+import leadRoutes from './routes/leadRoutes.js';
+import personalAreaRoutes from './routes/personalAreaRoutes.js';
+import courseEnrollmentRoutes from './routes/courseEnrollmentRoutes.js'; // New import
 
-// Admin Routes
-import adminRoutes from './admin/routes/adminRoutes';
 
 // Middleware
-import { errorHandler } from './middleware/errorHandler';
-import { logger } from './middleware/logger';
-import corsOptions from './config/corsConfig';
-import { adminAuthCheck } from './middleware/authMiddleware';
+import { errorHandler } from './middleware/errorHandler.js';
+import { logger } from './middleware/logger.js';
+import corsOptions from './config/corsConfig.js';
 import crypto from 'crypto';
-import emailRoutes from './routes/emailRoutes';
+import emailRoutes from './routes/emailRoutes.js';
 
 const JWT_SECRET = process.env.JWT_SECRET as string;
 const JWT_SECRET_HASH = crypto.createHash('sha256').update(JWT_SECRET).digest('hex');
@@ -44,10 +41,6 @@ const updatedCorsOptions = {
 
 app.use(cors(updatedCorsOptions));
 
-app.use((req, res, next) => {
-
-  next();
-});
 // Middleware
 app.use(cors(updatedCorsOptions));
 app.use(express.json());
@@ -118,12 +111,7 @@ app.use('/api/course-enrollments', courseEnrollmentRoutes); // New route
 app.use('/api/email', emailRoutes);
 
 // Admin Routes with adminAuthCheck middleware
-app.use('/admin', adminAuthCheck, (req, res, next) => {
-  if (req.method === 'POST' && req.path === '/courses') {
-    console.log('Course creation request received in app.ts:', JSON.stringify(req.body, null, 2));
-  }
-  next();
-}, adminRoutes);
+
 
 mongoose.connect(process.env.MONGODB_URI as string)
   .then(() => console.log('Connected to MongoDB'))
@@ -136,10 +124,5 @@ app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
 
-// Catch-all route for debugging
-app.use('*', (req, res) => {
-
-  res.status(404).json({ message: 'Route not found' });
-});
 
 export default app;

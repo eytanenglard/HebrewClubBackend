@@ -99,38 +99,12 @@ export const deleteLead = async (req: Request, res: Response): Promise<void> => 
   }
 };
 
-export const getLeadManagementData = async (req: Request, res: Response): Promise<void> => {
-  try {
-    const totalLeads = await Lead.countDocuments();
-    const lastWeekDate = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
-    const newLeadsLastWeek = await Lead.countDocuments({ createdAt: { $gte: lastWeekDate } });
-    
-    const leadsByStatus = await Lead.aggregate([
-      { $group: { _id: "$status", count: { $sum: 1 } } }
-    ]);
 
-    const data = {
-      totalLeads,
-      newLeadsLastWeek,
-      leadsByStatus
-    };
-
-    const response: ApiResponse<typeof data> = {
-      success: true,
-      data
-    };
-
-    res.json(response);
-  } catch (error) {
-    console.error('Error fetching lead management data:', error);
-    res.status(500).json({ success: false, error: 'Server error' });
-  }
-};
 
 export default {
   getLeads,
   createLead,
   updateLead,
   deleteLead,
-  getLeadManagementData,
+
 };

@@ -129,7 +129,9 @@ export const sendEmailVerification = async (req: Request, res: Response): Promis
       </body>
     </html>
   `;
-  return await sendEmail({ to, subject, html });
+  const success = await sendEmail({ to, subject, html });
+  res.json({ success });
+  return success;
 }
 export const sendAccountRecoveryInstructions = async (req: Request, res: Response): Promise<void> => {
   const { to, recoveryLink } = req.body;

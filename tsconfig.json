@@ -1,52 +1,32 @@
 {
   "compilerOptions": {
-    "target": "es2018",
+    "target": "ES2020",
     "module": "ESNext",
-    "lib": ["es2018", "dom"],
-    "outDir": "./dist",
-    "rootDir": "./src",
-    "strict": true,
-    "strictNullChecks": false,
-    "esModuleInterop": true,
-    "resolveJsonModule": true,
+    "lib": ["ES2020"],
     "moduleResolution": "node",
-    "sourceMap": true,
-    "declaration": true,
+    "rootDir": "./src",
+    "outDir": "./dist",
+    "esModuleInterop": true,
+    "strict": true,
     "noImplicitAny": true,
+    "strictNullChecks": true,
+    "strictFunctionTypes": true,
+    "strictBindCallApply": true,
+    "strictPropertyInitialization": true,
     "noImplicitThis": true,
     "alwaysStrict": true,
     "noUnusedLocals": true,
-    "noUnusedParameters": false,
+    "noUnusedParameters": true,
     "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true,
-    "forceConsistentCasingInFileNames": true,
-    "skipLibCheck": true,
-    "typeRoots": [
-      "./node_modules/@types",
-      "./src/types"
-    ],
-    "baseUrl": "./src",
-    "paths": {
-      "*": ["*", "types/*"]
-    },
     "allowSyntheticDefaultImports": true,
-    "experimentalDecorators": true,
-    "emitDecoratorMetadata": true,
-    "allowJs": true,
-    "removeComments": true,
-    "importHelpers": true,
-    "isolatedModules": true
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/*"]
+    },
+    "resolveJsonModule": true,
+    "forceConsistentCasingInFileNames": true
   },
-  "include": [
-    "src/**/*"
-  ],
-  "exclude": [
-    "node_modules",
-    "**/*.spec.ts",
-    "dist"
-  ],
-  "ts-node": {
-    "esm": true,
-    "experimentalSpecifierResolution": "node"
-  }
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "**/*.spec.ts"]
 }

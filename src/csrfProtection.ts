@@ -13,7 +13,7 @@ const csrfProtectionMiddleware = csurf({
   }
 });
 
-export const getCsrfToken = (req: Request, res: Response): void => {
+export const getCsrfToken = (_req: Request, res: Response): void => {
   const token = crypto.randomBytes(16).toString('hex');
   console.log(`${LOG_PREFIX} Generated new CSRF token:`, token);
   
@@ -25,6 +25,7 @@ export const getCsrfToken = (req: Request, res: Response): void => {
   
   res.json({ csrfToken: token });
 };
+
 export const validateCsrfToken = (req: Request, res: Response, next: NextFunction): void => {
   const token = req.headers['x-csrf-token'] as string || req.body._csrf;
   const cookieToken = req.cookies['XSRF-TOKEN'];

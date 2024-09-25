@@ -2,7 +2,7 @@ import { Request, Response } from 'express';
 import Payment from '../../models/Payment';
 import { Payment as PaymentType, ApiResponse } from '../../types/models';
 
-export const getPaymentManagementData = async (req: Request, res: Response): Promise<void> => {
+export const getPaymentManagementData = async (res: Response): Promise<void> => {
   try {
     const payments = await Payment.find()
       .populate('userId', 'name email')

@@ -20,7 +20,7 @@ type AsyncRouteHandler = (
 
 // Helper function to format user response
 const formatUserResponse = (user: UserDocument): EditableUserProfile => ({
-  _id: user._id.toString(),
+  _id: (user._id as mongoose.Types.ObjectId).toString(),
   name: user.name,
   email: user.email,
   username: user.username,

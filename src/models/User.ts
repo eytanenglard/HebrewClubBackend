@@ -88,7 +88,6 @@ interface UserDocument extends Omit<User, '_id'>, Document {
   comparePassword(candidatePassword: string): Promise<boolean>;
   hasPermission(permission: string): boolean;
   emailVerificationToken?: string;
-  
   emailVerificationCode?: string; // הוספת שדה חדש
   emailVerificationExpires?: Date;
   isEmailVerified: boolean;
