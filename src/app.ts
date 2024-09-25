@@ -82,14 +82,6 @@ app.use('/api/personal-area', personalAreaRoutes);
 app.use('/api/course-enrollments', courseEnrollmentRoutes);
 app.use('/api/email', emailRoutes);
 
-// Favicon route
-app.get('/favicon.ico', (_req, res) => res.status(204));
-
-// Health check route
-app.get('/health', (_req, res) => {
-  res.status(200).json({ status: 'OK' });
-});
-
 // MongoDB connection
 mongoose.connect(process.env.MONGODB_URI as string)
   .then(() => console.log('Connected to MongoDB'))
