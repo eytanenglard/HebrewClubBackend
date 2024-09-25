@@ -7,7 +7,6 @@ import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import crypto from 'crypto';
-import path from 'path';
 
 // General Routes
 import authRoutes from './routes/authRoutes.js';
