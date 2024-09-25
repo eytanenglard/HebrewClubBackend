@@ -6,9 +6,7 @@ import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
-console.log('Attempting to import csrfProtection');
-import { validateCsrfToken, getCsrfToken } from './csrfProtection.js';
-console.log('csrfProtection imported successfully');
+/* import { validateCsrfToken, getCsrfToken } from './csrfProtection.js'; */
 // General Routes
 import authRoutes from './routes/authRoutes.js';
 import leadRoutes from './routes/leadRoutes.js';
@@ -50,7 +48,7 @@ app.use(helmet());
 app.use(logger);
 
 // Define paths that should bypass CSRF
-const csrfBypassPaths = [
+/* const csrfBypassPaths = [
   '/auth/csrf-token',
   '/auth/verify-token',
   '/auth/refresh-token',
@@ -67,9 +65,9 @@ const csrfBypassPaths = [
   '/api/email/welcome-with-course',
   '/auth/forgot-password',
 ];
-
+ */
 // Custom middleware to apply CSRF selectively
-const selectiveCsrf = (req: express.Request, res: express.Response, next: express.NextFunction) => {
+/* const selectiveCsrf = (req: express.Request, res: express.Response, next: express.NextFunction) => {
   console.log('Selective CSRF check for path:', req.path);
   if (csrfBypassPaths.includes(req.path) || req.path.startsWith('/admin')) {
     console.log('CSRF bypassed for path:', req.path);
@@ -77,7 +75,7 @@ const selectiveCsrf = (req: express.Request, res: express.Response, next: expres
   }
   console.log('Applying CSRF check for path:', req.path);
   return validateCsrfToken(req, res, next);
-};
+}; */
 // Define rate limits for specific routes
 const authRateLimiter = rateLimit({
   windowMs: 60 * 60 * 1000, // 1 hour window
@@ -86,7 +84,7 @@ const authRateLimiter = rateLimit({
 });
 
 // Apply rate limiting to specific routes
-app.use('/auth/csrf-token', authRateLimiter);
+/* app.use('/auth/csrf-token', authRateLimiter); */
 app.use('/auth/verify-token', authRateLimiter);
 app.use('/auth/refresh-token', authRateLimiter);
 
@@ -98,10 +96,10 @@ const generalLimiter = rateLimit({
 app.use(generalLimiter);
 
 // CSRF Token route (must be defined before other routes)
-app.get('/auth/csrf-token', getCsrfToken);
+/* app.get('/auth/csrf-token', getCsrfToken); */
 
 // Apply selective CSRF protection
-app.use(selectiveCsrf);
+/* app.use(selectiveCsrf); */
 
 // General Routes
 app.use('/auth', authRoutes);
