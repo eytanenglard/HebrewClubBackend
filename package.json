@@ -7,7 +7,7 @@
   "scripts": {
     "start": "node dist/app.js",
     "dev": "ts-node-dev --respawn --transpile-only src/app.ts",
-    "build": "tsc && powershell Copy-Item -Path src/**/*.js,src/**/*.ts -Destination dist -Recurse -Force",
+    "build": "tsc && find src -type f \\( -name '*.js' -o -name '*.ts' \\) -exec cp -t dist {} +",
     "heroku-postbuild": "npm run build"
   },
   "keywords": [],
