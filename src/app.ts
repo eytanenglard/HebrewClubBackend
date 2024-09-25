@@ -88,14 +88,13 @@ mongoose.connect(process.env.MONGODB_URI as string)
   .catch((err) => console.error('MongoDB connection error:', err));
 
 // Error handling middleware
-app.use((err: any, _req: express.Request, res: express.Response) => {
+app.use((err: any, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
   console.error(err.stack);
   res.status(500).json({
     message: 'An internal server error occurred',
     error: process.env.NODE_ENV === 'production' ? {} : err
   });
 });
-
 // Final error handler
 app.use(errorHandler);
 
