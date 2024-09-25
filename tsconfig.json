@@ -1,8 +1,8 @@
 {
   "compilerOptions": {
-    "target": "es2017",
+    "target": "es2018",
     "module": "commonjs",
-    "lib": ["es2017", "dom"],
+    "lib": ["es2018", "dom"],
     "outDir": "./dist",
     "rootDir": "./src",
     "strict": true,
@@ -31,7 +31,8 @@
     },
     "allowSyntheticDefaultImports": true,
     "experimentalDecorators": true,
-    "emitDecoratorMetadata": true
+    "emitDecoratorMetadata": true,
+    "allowJs": true
   },
   "include": [
     "src/**/*"
