@@ -7,6 +7,7 @@ import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import crypto from 'crypto';
+import path from 'path';
 
 // General Routes
 import authRoutes from './routes/authRoutes.js';
@@ -53,6 +54,9 @@ app.use(cookieParser());
 app.use(helmet());
 app.use(logger);
 
+// Serve static files from the 'public' directory
+app.use(express.static(path.join(__dirname, 'public')));
+
 // Define rate limits for specific routes
 const authRateLimiter = rateLimit({
   windowMs: 60 * 60 * 1000, // 1 hour window
@@ -75,6 +79,11 @@ app.use('/auth/verify-token', authRateLimiter);
 app.use('/auth/refresh-token', authRateLimiter);
 app.use(generalLimiter);
 
+// Handle favicon.ico requests
+app.get('/favicon.ico', (_req, res) => {
+  res.status(204).end(); // No content
+});
+
 // General Routes
 app.use('/auth', authRoutes);
 app.use('/api/leads', leadRoutes);
@@ -87,14 +96,32 @@ mongoose.connect(process.env.MONGODB_URI as string)
   .then(() => console.log('Connected to MongoDB'))
   .catch((err) => console.error('MongoDB connection error:', err));
 
+// Handle 404 - Keep this as a last route
+app.use(function(req, res, _next) {
+  res.status(404);
+  // respond with html page
+  if (req.accepts('html')) {
+    res.send('404: Page not found');
+    return;
+  }
+  // respond with json
+  if (req.accepts('json')) {
+    res.json({ error: 'Not found' });
+    return;
+  }
+  // default to plain-text
+  res.type('txt').send('Not found');
+});
+
 // Error handling middleware
 app.use((err: any, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
   console.error(err.stack);
-  res.status(500).json({
-    message: 'An internal server error occurred',
+  res.status(err.status || 500).json({
+    message: err.message || 'An internal server error occurred',
     error: process.env.NODE_ENV === 'production' ? {} : err
   });
 });
+
 // Final error handler
 app.use(errorHandler);
 
