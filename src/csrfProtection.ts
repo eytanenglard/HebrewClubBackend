@@ -29,7 +29,8 @@ export const getCsrfToken = (_req: Request, res: Response): void => {
 export const validateCsrfToken = (req: Request, res: Response, next: NextFunction): void => {
   const token = req.headers['x-csrf-token'] as string || req.body._csrf;
   const cookieToken = req.cookies['XSRF-TOKEN'];
-  
+  console.log('csrf-token', token);
+  console.log('cookieToken-csrf-token', cookieToken);
   if (!token || !cookieToken || token !== cookieToken) {
     console.error(`${LOG_PREFIX} Invalid CSRF token`);
     res.status(403).json({ message: 'Invalid CSRF token' });
