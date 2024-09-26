@@ -17,7 +17,8 @@ const exemptPaths = [ '/auth/csrf-token',
   '/api/email/contact-form',
   '/api/email/welcome-with-course',
   '/auth/forgot-password',
-  '/api/leads',];
+  '/api/leads',
+'/auth/logout',];
 
 const csrfConfig = {
   // Middleware להחלת הגנת CSRF

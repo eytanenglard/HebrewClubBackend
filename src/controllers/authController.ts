@@ -238,7 +238,13 @@ export const loginUser = async (req: Request, res: Response): Promise<void> => {
   }
 };
 
-export const logoutUser = (_req: Request, res: Response): void => {
+export const logoutUser = (req: Request, res: Response): void => {
+  const token = req.cookies.accessToken || req.header('Authorization')?.replace('Bearer ', '');
+  if (!token) {
+    console.log(`${LOG_PREFIX} No token found, user already logged out`);
+    res.status(200).json({ success: true, message: 'User already logged out' });
+    return;
+  }
   console.log(`${LOG_PREFIX} Logging out user`);
   res.clearCookie('accessToken');
   res.json({ success: true, message: 'Logged out successfully' } as ApiResponse<null>);
