@@ -67,6 +67,7 @@ export const registerUser = async (req: Request, res: Response): Promise<void> =
 
     // Send verification email
     const emailSent = await sendEmailVerification(email, verificationToken, verificationCode, name);
+
     if (!emailSent) {
       console.error(`${LOG_PREFIX} Failed to send verification email`);
       res.status(500).json({ success: false, error: 'Failed to send verification email' } as ApiResponse<null>);
@@ -528,14 +529,7 @@ export const resetPassword = async (req: Request, res: Response): Promise<void> 
 const sendEmailVerification = async (to: string, verificationToken: string, verificationCode: string, name: string): Promise<boolean> => {
   console.log(`${LOG_PREFIX} Sending email verification to:`, to);
   try {
-    const success = await sendVerificationEmail({
-      body: {
-        to,
-        verificationToken,
-        verificationCode,
-        name
-      }
-    } as any, {} as any);
+    const success = await sendVerificationEmail(to, verificationToken, verificationCode, name);
     
     console.log(`${LOG_PREFIX} Email verification sent successfully`);
     return success;
