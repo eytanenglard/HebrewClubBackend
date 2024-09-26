@@ -158,7 +158,7 @@ export const updateCourseStructure = async (req: Request, res: Response): Promis
   }
 };
 
-export const getInstructors = async (res: Response): Promise<void> => {
+export const getInstructors = async (_req: Request, res: Response): Promise<void> => {
   try {
     console.log("Fetching instructors...");
     const instructors = await User.find({ 'role.name': 'instructor' });
@@ -181,7 +181,7 @@ export const getInstructors = async (res: Response): Promise<void> => {
   }
 };
 
-export const getUsersCourse = async (res: Response): Promise<void> => {
+export const getUsersCourse = async (_req: Request, res: Response): Promise<void> => {
   try {
     console.log("Fetching users...");
     const users = await User.find();
