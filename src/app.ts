@@ -7,23 +7,24 @@ import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import crypto from 'crypto';
-import { validateCsrfToken, getCsrfToken, closeRedisConnection } from './csrfProtection.js';
 
-// General Routes
-import authRoutes from './routes/authRoutes.js';
-import leadRoutes from './routes/leadRoutes.js';
-import personalAreaRoutes from './routes/personalAreaRoutes.js';
-import courseEnrollmentRoutes from './routes/courseEnrollmentRoutes.js';
-import emailRoutes from './routes/emailRoutes.js';
+// כללי Routes
+import authRoutes from './routes/authRoutes';
+import leadRoutes from './routes/leadRoutes';
+import personalAreaRoutes from './routes/personalAreaRoutes';
+import courseEnrollmentRoutes from './routes/courseEnrollmentRoutes';
+import emailRoutes from './routes/emailRoutes';
 
 // Middleware
-import { errorHandler } from './middleware/errorHandler.js';
-import { logger } from './middleware/logger.js';
-import corsOptions from './config/corsConfig.js';
+import { errorHandler } from './middleware/errorHandler';
+import { logger } from './middleware/logger';
+import corsOptions from './config/corsConfig';
+import csrfConfig from './config/csrfConfig';
+import { closeRedisConnection } from './csrfProtection';
 
 dotenv.config();
 
-// Check for required environment variables
+// בדיקת קיום משתני סביבה הכרחיים
 if (!process.env.MONGODB_URI || !process.env.JWT_SECRET || !process.env.REDIS_URL) {
   console.error('Missing required environment variables');
   process.exit(1);
@@ -36,119 +37,78 @@ console.log('JWT_SECRET Hash:', JWT_SECRET_HASH);
 
 const app = express();
 
-// Set trust proxy
+// הגדרת trust proxy
 app.set('trust proxy', 1);
 
-// Updated CORS options
-const updatedCorsOptions = {
-  ...corsOptions,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-CSRF-Token', 'X-React-DevTools'],
-};
-
 // Middleware
-app.use(cors(updatedCorsOptions));
+app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(helmet());
 app.use(logger);
 
-// Define paths that should bypass CSRF
-const csrfBypassPaths = [
-  '/auth/csrf-token',
-  '/auth/verify-token',
-  '/auth/refresh-token',
-  '/api/email/csrf-token',
-  '/api/email/welcome',
-  '/api/email/password-reset',
-  '/api/email/course-purchase',
-  '/api/email/verify',
-  '/api/email/account-recovery',
-  '/api/email/lesson-reminder',
-  '/api/email/lesson-cancellation',
-  '/api/email/payment-confirmation',
-  '/api/email/contact-form',
-  '/api/email/welcome-with-course',
-  '/auth/forgot-password',
-  '/api/leads',
-];
-
-// Custom middleware to apply CSRF selectively
-const selectiveCsrf = async (req: express.Request, res: express.Response, next: express.NextFunction) => {
-  console.log('Selective CSRF check for path:', req.path);
-  if (csrfBypassPaths.includes(req.path) || req.path.startsWith('/admin')) {
-    console.log('CSRF bypassed for path:', req.path);
-    return next();
-  }
-  console.log('Applying CSRF check for path:', req.path);
-  return validateCsrfToken(req, res, next);
-};
-
-// Define rate limits for specific routes
+// הגדרת Rate Limiting
 const authRateLimiter = rateLimit({
-  windowMs: 60 * 60 * 1000, // 1 hour window
-  max: 20000, // 20000 requests per hour
+  windowMs: 60 * 60 * 1000, // חלון של שעה
+  max: 20000, // 20000 בקשות לשעה
   standardHeaders: true,
   legacyHeaders: false,
   message: 'Too many requests from this IP, please try again later.'
 });
 
-// General rate limiter for other routes
 const generalLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // 100 requests per 15 minutes
+  windowMs: 15 * 60 * 1000, // 15 דקות
+  max: 100, // 100 בקשות ל-15 דקות
   standardHeaders: true,
   legacyHeaders: false
 });
 
-// Apply rate limiting to specific routes
+// החלת Rate Limiting על נתיבים ספציפיים
 app.use('/auth/csrf-token', authRateLimiter);
 app.use('/auth/verify-token', authRateLimiter);
 app.use('/auth/refresh-token', authRateLimiter);
 app.use(generalLimiter);
 
-// Handle favicon.ico requests
+// טיפול בבקשות favicon.ico
 app.get('/favicon.ico', (_req, res) => {
   res.status(204).end(); // No content
 });
 
-// CSRF Token route (must be defined before other routes)
-app.get('/auth/csrf-token', getCsrfToken);
+// נתיב לקבלת טוקן CSRF
+app.get('/auth/csrf-token', csrfConfig.getToken);
 
-// Apply selective CSRF protection
-app.use(selectiveCsrf);
+// החלת הגנת CSRF
+app.use(csrfConfig.protect);
+app.use(csrfConfig.ensure);
 
-// General Routes
+// הגדרת נתיבים
 app.use('/auth', authRoutes);
 app.use('/api/leads', leadRoutes);
 app.use('/api/personal-area', personalAreaRoutes);
 app.use('/api/course-enrollments', courseEnrollmentRoutes);
 app.use('/api/email', emailRoutes);
 
-// MongoDB connection
+// התחברות ל-MongoDB
 mongoose.connect(process.env.MONGODB_URI as string)
   .then(() => console.log('Connected to MongoDB'))
   .catch((err) => console.error('MongoDB connection error:', err));
 
-// Handle 404 - Keep this as a last route
+// טיפול ב-404
 app.use(function(req, res, _next) {
   res.status(404);
-  // respond with html page
   if (req.accepts('html')) {
     res.send('404: Page not found');
     return;
   }
-  // respond with json
   if (req.accepts('json')) {
     res.json({ error: 'Not found' });
     return;
   }
-  // default to plain-text
   res.type('txt').send('Not found');
 });
 
-// Error handling middleware
+// טיפול בשגיאות
 app.use((err: any, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
   console.error(err.stack);
   res.status(err.status || 500).json({
@@ -157,7 +117,7 @@ app.use((err: any, _req: express.Request, res: express.Response, _next: express.
   });
 });
 
-// Final error handler
+// טיפול סופי בשגיאות
 app.use(errorHandler);
 
 const PORT = process.env.PORT || 5000;
@@ -165,7 +125,7 @@ const server = app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
 
-// Graceful shutdown
+// כיבוי חלק
 process.on('SIGTERM', () => {
   console.log('SIGTERM signal received: closing HTTP server');
   server.close(async () => {
