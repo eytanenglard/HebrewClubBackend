@@ -7,7 +7,7 @@ import crypto from 'crypto';
 import dotenv from 'dotenv';
 import UserModel, { UserDocument } from '../models/User.js';
 import { sendPasswordResetEmail} from '../controllers/emailController.js';
-import { Types } from 'mongoose';
+import { sendEmailVerification as sendVerificationEmail } from '../controllers/emailController.js';
 
 dotenv.config();
 const LOG_PREFIX = '[AuthController]';
@@ -88,6 +88,8 @@ export const registerUser = async (req: Request, res: Response): Promise<void> =
     res.status(500).json({ success: false, error: 'Server error' } as ApiResponse<null>);
   }
 };
+
+import { Types } from 'mongoose';
 
 export const verifyEmail = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -526,7 +528,14 @@ export const resetPassword = async (req: Request, res: Response): Promise<void> 
 const sendEmailVerification = async (to: string, verificationToken: string, verificationCode: string, name: string): Promise<boolean> => {
   console.log(`${LOG_PREFIX} Sending email verification to:`, to);
   try {
-    const success = await sendEmailVerification(to, verificationToken, verificationCode, name);
+    const success = await sendVerificationEmail({
+      body: {
+        to,
+        verificationToken,
+        verificationCode,
+        name
+      }
+    } as any, {} as any);
     
     console.log(`${LOG_PREFIX} Email verification sent successfully`);
     return success;
@@ -535,6 +544,7 @@ const sendEmailVerification = async (to: string, verificationToken: string, veri
     return false;
   }
 };
+
 export default {
   csrfTokenHandler,
   registerUser,

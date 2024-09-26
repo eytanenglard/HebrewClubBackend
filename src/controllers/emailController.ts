@@ -89,11 +89,13 @@ export const sendCoursePurchaseConfirmation = async (req: Request, res: Response
   res.json({ success });
 };
 
-export const sendEmailVerification = async (to: string, verificationToken: string, verificationCode: string, name: string): Promise<boolean> => {
+
+export const sendEmailVerification = async (req: Request, res: Response): Promise<boolean> => {
+  const { to, verificationToken, verificationCode, name } = req.body;
   console.log('to', to);
   const subject = 'Welcome to Hebrew Club - Verify Your Email Address';
   const verificationLink = `${config.website.url}/verify-email?token=${verificationToken}`;
- const html = `
+  const html = `
     <html>
       <head>
         <style>
@@ -128,6 +130,7 @@ export const sendEmailVerification = async (to: string, verificationToken: strin
     </html>
   `;
   const success = await sendEmail({ to, subject, html });
+  res.json({ success });
   return success;
 }
 export const sendAccountRecoveryInstructions = async (req: Request, res: Response): Promise<void> => {
