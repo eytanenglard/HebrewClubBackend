@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
-import Course from '../../../models/Course';
-import User from '../../../models/User';
-import { Course as CourseType, CourseData, User as UserType, ApiResponse, PaginatedResponse } from '../../../types/models';
+import Course from '../../../models/Course.js';
+import User from '../../../models/User.js';
+import { Course as CourseType, CourseData, User as UserType, ApiResponse, PaginatedResponse } from '../../../types/models.js';
 import mongoose from 'mongoose';
 
 export const getCourseContent = async (req: Request, res: Response): Promise<void> => {
