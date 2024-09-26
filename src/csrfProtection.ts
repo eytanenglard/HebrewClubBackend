@@ -25,18 +25,29 @@ const generateCsrfToken = (): string => {
 
 export const getCsrfToken = async (req: Request, res: Response): Promise<void> => {
   try {
-    const sessionId = req.headers['x-session-id'] as string || generateSessionId();
-    const token = generateCsrfToken();
-    
-    console.log(`${LOG_PREFIX} Generated new CSRF token:`, token);
-    
-    // Store the token in Redis with the session ID as the key
-    await redis.set(`csrf:${sessionId}`, token, 'EX', 3600); // Expires in 1 hour
-    
+    let sessionId = req.headers['x-session-id'] as string;
+    let token: string | null;
+
+    if (!sessionId) {
+      sessionId = generateSessionId();
+      token = generateCsrfToken();
+      await redis.set(`csrf:${sessionId}`, token, 'EX', 3600); // Expires in 1 hour
+      console.log(`${LOG_PREFIX} Generated new session ID and CSRF token:`, { sessionId, token });
+    } else {
+      token = await redis.get(`csrf:${sessionId}`);
+      if (!token) {
+        token = generateCsrfToken();
+        await redis.set(`csrf:${sessionId}`, token, 'EX', 3600);
+        console.log(`${LOG_PREFIX} Generated new CSRF token for existing session:`, { sessionId, token });
+      } else {
+        console.log(`${LOG_PREFIX} Using existing CSRF token for session:`, { sessionId, token });
+      }
+    }
+
     res.setHeader('X-Session-ID', sessionId);
     res.json({ csrfToken: token });
   } catch (error) {
-    console.error(`${LOG_PREFIX} Error generating CSRF token:`, error);
+    console.error(`${LOG_PREFIX} Error handling CSRF token:`, error);
     res.status(500).json({ message: 'Internal server error' });
   }
 };
@@ -45,25 +56,43 @@ export const validateCsrfToken = async (req: Request, res: Response, next: NextF
   try {
     const sessionId = req.headers['x-session-id'] as string;
     const token = req.headers['x-csrf-token'] as string || req.body._csrf;
-    
+
     if (!sessionId || !token) {
-      console.error(`${LOG_PREFIX} Missing session ID or CSRF token`);
-      res.status(403).json({ message: 'Missing session ID or CSRF token' });
+      console.error(`${LOG_PREFIX} Missing session ID or CSRF token`, { sessionId, token });
+      res.status(401).json({ message: 'Missing session ID or CSRF token' });
       return;
     }
-    
+
     const storedToken = await redis.get(`csrf:${sessionId}`);
-    
+
     if (!storedToken || token !== storedToken) {
-      console.error(`${LOG_PREFIX} Invalid CSRF token`);
+      console.error(`${LOG_PREFIX} Invalid CSRF token`, { sessionId, providedToken: token, storedToken });
       res.status(403).json({ message: 'Invalid CSRF token' });
       return;
     }
-    
-    console.log(`${LOG_PREFIX} CSRF token is valid`);
+
+    console.log(`${LOG_PREFIX} CSRF token is valid`, { sessionId, token });
     next();
   } catch (error) {
     console.error(`${LOG_PREFIX} Error validating CSRF token:`, error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+};
+
+export const ensureSession = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    let sessionId = req.headers['x-session-id'] as string;
+    if (!sessionId) {
+      sessionId = generateSessionId();
+      console.log(`${LOG_PREFIX} Generated new session ID:`, sessionId);
+      res.setHeader('X-Session-ID', sessionId);
+    } else {
+      console.log(`${LOG_PREFIX} Using existing session ID:`, sessionId);
+    }
+    req.headers['x-session-id'] = sessionId;
+    next();
+  } catch (error) {
+    console.error(`${LOG_PREFIX} Error ensuring session:`, error);
     res.status(500).json({ message: 'Internal server error' });
   }
 };
@@ -73,9 +102,17 @@ export const ensureCsrfToken = async (req: Request, res: Response, next: NextFun
   try {
     const sessionId = req.headers['x-session-id'] as string;
     
-    if (!sessionId || !(await redis.exists(`csrf:${sessionId}`))) {
+    if (!sessionId) {
+      console.error(`${LOG_PREFIX} No session ID found`);
+      res.status(401).json({ message: 'No session ID found' });
+      return;
+    }
+
+    const existingToken = await redis.get(`csrf:${sessionId}`);
+    if (!existingToken) {
       await getCsrfToken(req, res);
     } else {
+      console.log(`${LOG_PREFIX} CSRF token already exists for session:`, sessionId);
       next();
     }
   } catch (error) {
@@ -97,6 +134,7 @@ export const closeRedisConnection = async (): Promise<void> => {
 export default {
   getCsrfToken,
   validateCsrfToken,
+  ensureSession,
   ensureCsrfToken,
   closeRedisConnection
 };
