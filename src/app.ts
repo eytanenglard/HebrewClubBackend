@@ -7,7 +7,7 @@ import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import crypto from 'crypto';
-import { validateCsrfToken, getCsrfToken } from './csrfProtection.js';
+import { validateCsrfToken, getCsrfToken, closeRedisConnection } from './csrfProtection.js';
 
 // General Routes
 import authRoutes from './routes/authRoutes.js';
@@ -24,7 +24,7 @@ import corsOptions from './config/corsConfig.js';
 dotenv.config();
 
 // Check for required environment variables
-if (!process.env.MONGODB_URI || !process.env.JWT_SECRET) {
+if (!process.env.MONGODB_URI || !process.env.JWT_SECRET || !process.env.REDIS_URL) {
   console.error('Missing required environment variables');
   process.exit(1);
 }
@@ -75,7 +75,7 @@ const csrfBypassPaths = [
 ];
 
 // Custom middleware to apply CSRF selectively
-const selectiveCsrf = (req: express.Request, res: express.Response, next: express.NextFunction) => {
+const selectiveCsrf = async (req: express.Request, res: express.Response, next: express.NextFunction) => {
   console.log('Selective CSRF check for path:', req.path);
   if (csrfBypassPaths.includes(req.path) || req.path.startsWith('/admin')) {
     console.log('CSRF bypassed for path:', req.path);
@@ -161,8 +161,20 @@ app.use((err: any, _req: express.Request, res: express.Response, _next: express.
 app.use(errorHandler);
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
+});
+
+// Graceful shutdown
+process.on('SIGTERM', () => {
+  console.log('SIGTERM signal received: closing HTTP server');
+  server.close(async () => {
+    console.log('HTTP server closed');
+    await closeRedisConnection();
+    await mongoose.connection.close();
+    console.log('MongoDB connection closed');
+    process.exit(0);
+  });
 });
 
 export default app;
