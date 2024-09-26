@@ -45,7 +45,7 @@ export const getCsrfToken = async (req: Request, res: Response): Promise<void> =
     }
 
     res.setHeader('X-Session-ID', sessionId);
-    res.json({ csrfToken: token });
+    res.json({ csrfToken: token, sessionId: sessionId });
   } catch (error) {
     console.error(`${LOG_PREFIX} Error handling CSRF token:`, error);
     res.status(500).json({ message: 'Internal server error' });
