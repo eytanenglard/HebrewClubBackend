@@ -160,11 +160,21 @@ export const updateCourseStructure = async (req: Request, res: Response): Promis
 
 export const getInstructors = async (res: Response): Promise<void> => {
   try {
+    console.log("Fetching instructors...");
     const instructors = await User.find({ 'role.name': 'instructor' });
-    res.json({ 
-      success: true, 
-      data: instructors
-    } as ApiResponse<UserType[]>);
+    
+    if (instructors.length === 0) {
+      res.json({ 
+        success: true, 
+        data: [],
+        message: 'No instructors found'
+      } as ApiResponse<UserType[]>);
+    } else {
+      res.json({ 
+        success: true, 
+        data: instructors
+      } as ApiResponse<UserType[]>);
+    }
   } catch (error) {
     console.error('Error fetching instructors:', error);
     res.status(500).json({ success: false, error: 'Server error while fetching instructors' } as ApiResponse<null>);
@@ -173,11 +183,21 @@ export const getInstructors = async (res: Response): Promise<void> => {
 
 export const getUsersCourse = async (res: Response): Promise<void> => {
   try {
+    console.log("Fetching users...");
     const users = await User.find();
-    res.json({ 
-      success: true, 
-      data: users
-    } as ApiResponse<UserType[]>);
+    
+    if (users.length === 0) {
+      res.json({ 
+        success: true, 
+        data: [],
+        message: 'No users found'
+      } as ApiResponse<UserType[]>);
+    } else {
+      res.json({ 
+        success: true, 
+        data: users
+      } as ApiResponse<UserType[]>);
+    }
   } catch (error) {
     console.error('Error fetching users:', error);
     res.status(500).json({ success: false, error: 'Server error while fetching users' } as ApiResponse<null>);
