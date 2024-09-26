@@ -238,7 +238,7 @@ export const loginUser = async (req: Request, res: Response): Promise<void> => {
   }
 };
 
-export const logoutUser = (res: Response): void => {
+export const logoutUser = (_req: Request, res: Response): void => {
   console.log(`${LOG_PREFIX} Logging out user`);
   res.clearCookie('accessToken');
   res.json({ success: true, message: 'Logged out successfully' } as ApiResponse<null>);
