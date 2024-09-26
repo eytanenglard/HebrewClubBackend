@@ -14,7 +14,7 @@ import leadRoutes from './routes/leadRoutes.js';
 import personalAreaRoutes from './routes/personalAreaRoutes.js';
 import courseEnrollmentRoutes from './routes/courseEnrollmentRoutes.js';
 import emailRoutes from './routes/emailRoutes.js';
-
+import adminRoutes from './admin/routes/adminRoutes.js';
 // Middleware
 import { errorHandler } from './middleware/errorHandler.js';
 import { logger } from './middleware/logger.js';
@@ -88,7 +88,7 @@ app.use('/api/leads', leadRoutes);
 app.use('/api/personal-area', personalAreaRoutes);
 app.use('/api/course-enrollments', courseEnrollmentRoutes);
 app.use('/api/email', emailRoutes);
-
+app.use('/admin', adminRoutes);
 // התחברות ל-MongoDB
 mongoose.connect(process.env.MONGODB_URI as string)
   .then(() => console.log('Connected to MongoDB'))
