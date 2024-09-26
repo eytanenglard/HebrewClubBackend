@@ -8,6 +8,7 @@ import dotenv from 'dotenv';
 import UserModel, { UserDocument } from '../models/User.js';
 import { sendPasswordResetEmail} from '../controllers/emailController.js';
 import { sendEmailVerification as sendVerificationEmail } from '../controllers/emailController.js';
+import { Types } from 'mongoose';
 
 dotenv.config();
 const LOG_PREFIX = '[AuthController]';
@@ -67,7 +68,6 @@ export const registerUser = async (req: Request, res: Response): Promise<void> =
 
     // Send verification email
     const emailSent = await sendEmailVerification(email, verificationToken, verificationCode, name);
-
     if (!emailSent) {
       console.error(`${LOG_PREFIX} Failed to send verification email`);
       res.status(500).json({ success: false, error: 'Failed to send verification email' } as ApiResponse<null>);
@@ -89,8 +89,6 @@ export const registerUser = async (req: Request, res: Response): Promise<void> =
     res.status(500).json({ success: false, error: 'Server error' } as ApiResponse<null>);
   }
 };
-
-import { Types } from 'mongoose';
 
 export const verifyEmail = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -529,7 +527,14 @@ export const resetPassword = async (req: Request, res: Response): Promise<void> 
 const sendEmailVerification = async (to: string, verificationToken: string, verificationCode: string, name: string): Promise<boolean> => {
   console.log(`${LOG_PREFIX} Sending email verification to:`, to);
   try {
-    const success = await sendVerificationEmail(to, verificationToken, verificationCode, name);
+    const success = await sendVerificationEmail({
+      body: {
+        to,
+        verificationToken,
+        verificationCode,
+        name
+      }
+    } as any, {} as any);
     
     console.log(`${LOG_PREFIX} Email verification sent successfully`);
     return success;
