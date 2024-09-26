@@ -14,7 +14,7 @@ const config = {
     fromAddress: process.env.EMAIL_FROM_ADDRESS
   },
   website: {
-    url: process.env.WEBSITE_URL
+    url: process.env.CLIENT_URL
   }
 };
 
@@ -62,7 +62,7 @@ export const sendWelcomeEmail = async (req: Request, res: Response): Promise<voi
 
 
 export const sendPasswordResetEmail = async (to: string, resetToken: string, attemptsLeft: number): Promise<boolean> => {
-  console.log('WEBSITE_URL--:', config.website.url);
+  console.log('CLIENT_URLL--:', config.website.url);
   console.log('resetToken---:', resetToken);
   const subject = 'Password Reset Request';
   const resetLink = `${config.website.url}/reset-password?token=${resetToken}`;
