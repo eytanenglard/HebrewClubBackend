@@ -8,6 +8,7 @@ import dotenv from 'dotenv';
 import UserModel, { UserDocument } from '../models/User.js';
 import { sendPasswordResetEmail} from '../controllers/emailController.js';
 import { sendEmailVerification as sendVerificationEmail } from '../controllers/emailController.js';
+import { Types } from 'mongoose';
 
 dotenv.config();
 const LOG_PREFIX = '[AuthController]';
@@ -88,10 +89,6 @@ export const registerUser = async (req: Request, res: Response): Promise<void> =
     res.status(500).json({ success: false, error: 'Server error' } as ApiResponse<null>);
   }
 };
-
-import { Types } from 'mongoose';
-
-// ... (קוד קודם נשאר ללא שינוי)
 
 export const verifyEmail = async (req: Request, res: Response): Promise<void> => {
   try {
