@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { validateCsrfToken, ensureCsrfToken, getCsrfToken } from '../csrfProtection';
+import { validateCsrfToken, ensureCsrfToken, getCsrfToken } from '../csrfProtection.js';
 
 // רשימת נתיבים שפטורים מהגנת CSRF
 const exemptPaths = [ '/auth/csrf-token',

@@ -9,18 +9,18 @@ import rateLimit from 'express-rate-limit';
 import crypto from 'crypto';
 
 // כללי Routes
-import authRoutes from './routes/authRoutes';
-import leadRoutes from './routes/leadRoutes';
-import personalAreaRoutes from './routes/personalAreaRoutes';
-import courseEnrollmentRoutes from './routes/courseEnrollmentRoutes';
-import emailRoutes from './routes/emailRoutes';
+import authRoutes from './routes/authRoutes.js';
+import leadRoutes from './routes/leadRoutes.js';
+import personalAreaRoutes from './routes/personalAreaRoutes.js';
+import courseEnrollmentRoutes from './routes/courseEnrollmentRoutes.js';
+import emailRoutes from './routes/emailRoutes.js';
 
 // Middleware
-import { errorHandler } from './middleware/errorHandler';
-import { logger } from './middleware/logger';
-import corsOptions from './config/corsConfig';
-import csrfConfig from './config/csrfConfig';
-import { closeRedisConnection } from './csrfProtection';
+import { errorHandler } from './middleware/errorHandler.js';
+import { logger } from './middleware/logger.js';
+import corsOptions from './config/corsConfig.js';
+import csrfConfig from './config/csrfConfig.js';
+import { closeRedisConnection } from './csrfProtection.js';
 
 dotenv.config();
 
