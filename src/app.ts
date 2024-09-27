@@ -78,9 +78,6 @@ app.get('/favicon.ico', (_req, res) => {
 // נתיב לקבלת טוקן CSRF
 app.get('/auth/csrf-token', csrfConfig.getToken);
 
-// החלת הגנת CSRF
-app.use(csrfConfig.protect);
-app.use(csrfConfig.ensure);
 
 // הגדרת נתיבים
 app.use('/auth', authRoutes);
@@ -90,6 +87,11 @@ app.use('/api/course-enrollments', courseEnrollmentRoutes);
 app.use('/api/email', emailRoutes);
 app.use('/admin', adminRoutes);
 // התחברות ל-MongoDB
+
+// החלת הגנת CSRF
+app.use(csrfConfig.protect);
+app.use(csrfConfig.ensure);
+
 mongoose.connect(process.env.MONGODB_URI as string)
   .then(() => console.log('Connected to MongoDB'))
   .catch((err) => console.error('MongoDB connection error:', err));

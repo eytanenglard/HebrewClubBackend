@@ -25,7 +25,6 @@ const exemptPaths = [ '/auth/csrf-token',
 const csrfConfig = {
   // Middleware להחלת הגנת CSRF
   protect: (req: Request, res: Response, next: NextFunction) => {
-    // דילוג על בדיקת CSRF עבור נתיבים פטורים או בקשות GET
     if (exemptPaths.includes(req.path) || req.method === 'GET') {
       return next();
     }
