@@ -1,54 +1,48 @@
-import { Request, Response } from 'express';
 import nodemailer from 'nodemailer';
 import dotenv from 'dotenv';
 dotenv.config();
-
 const config = {
-  email: {
-    host: process.env.EMAIL_HOST,
-    port: parseInt(process.env.EMAIL_PORT || '587'),
-    secure: process.env.EMAIL_SECURE === 'true',
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
-    fromName: process.env.EMAIL_FROM_NAME,
-    fromAddress: process.env.EMAIL_FROM_ADDRESS
-  },
-  website: {
-    url: process.env.CLIENT_URL
-  }
+    email: {
+        host: process.env.EMAIL_HOST,
+        port: parseInt(process.env.EMAIL_PORT || '587'),
+        secure: process.env.EMAIL_SECURE === 'true',
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
+        fromName: process.env.EMAIL_FROM_NAME,
+        fromAddress: process.env.EMAIL_FROM_ADDRESS
+    },
+    website: {
+        url: process.env.CLIENT_URL
+    }
 };
-
 const transporter = nodemailer.createTransport({
-  host: config.email.host,
-  port: config.email.port,
-  secure: config.email.secure,
-  auth: {
-    user: config.email.user,
-    pass: config.email.pass,
-  },
+    host: config.email.host,
+    port: config.email.port,
+    secure: config.email.secure,
+    auth: {
+        user: config.email.user,
+        pass: config.email.pass,
+    },
 });
-
-const sendEmail = async (options: nodemailer.SendMailOptions): Promise<boolean> => {
-  try {
-    console.log('Environment variables loaded:');
-
-    await transporter.sendMail({
-      from: `"${config.email.fromName}" <${config.email.fromAddress}>`,
-      ...options,
-    });
-    console.log(`Email sent successfully to ${options.to}`);
-    return true;
-  } catch (error) {
-    console.error('Error sending email:', error);
-    return false;
-  }
+const sendEmail = async (options) => {
+    try {
+        console.log('Environment variables loaded:');
+        await transporter.sendMail({
+            from: `"${config.email.fromName}" <${config.email.fromAddress}>`,
+            ...options,
+        });
+        console.log(`Email sent successfully to ${options.to}`);
+        return true;
+    }
+    catch (error) {
+        console.error('Error sending email:', error);
+        return false;
+    }
 };
-
-export const sendWelcomeEmail = async (req: Request, res: Response): Promise<void> => {
- 
-  const { to, name, temporaryPassword } = req.body;
-  const subject = 'Welcome to Our Platform!';
-  const html = `
+export const sendWelcomeEmail = async (req, res) => {
+    const { to, name, temporaryPassword } = req.body;
+    const subject = 'Welcome to Our Platform!';
+    const html = `
     <h1>Welcome, ${name}!</h1>
     <p>Thank you for joining our platform. Here are your account details:</p>
     <p>Email: ${to}</p>
@@ -56,54 +50,45 @@ export const sendWelcomeEmail = async (req: Request, res: Response): Promise<voi
     <p>Please log in and change your password as soon as possible.</p>
     <a href="${config.website.url}/login">Click here to log in</a>
   `;
-  const success = await sendEmail({ to, subject, html });
-  res.json({ success });
+    const success = await sendEmail({ to, subject, html });
+    res.json({ success });
 };
-
-
-export const sendPasswordResetEmail = async (to: string, resetToken: string, attemptsLeft: number): Promise<boolean> => {
-  console.log('CLIENT_URLL--:', config.website.url);
-  console.log('resetToken---:', resetToken);
-  const subject = 'Password Reset Request';
-  const resetLink = `${config.website.url}/reset-password?token=${resetToken}`;
-  const html = `
+export const sendPasswordResetEmail = async (to, resetToken, attemptsLeft) => {
+    console.log('CLIENT_URLL--:', config.website.url);
+    console.log('resetToken---:', resetToken);
+    const subject = 'Password Reset Request';
+    const resetLink = `${config.website.url}/reset-password?token=${resetToken}`;
+    const html = `
     <h1>Password Reset Request</h1>
     <p>You have requested to reset your password. Click the link below to set a new password:</p>
     <a href="${resetLink}">Reset Password</a>
     <p>You have ${attemptsLeft} attempt(s) left before your account is locked.</p>
     <p>If you didn't request this, please ignore this email.</p>
   `;
-  return await sendEmail({ to, subject, html });
+    return await sendEmail({ to, subject, html });
 };
-export const sendCoursePurchaseConfirmation = async (req: Request, res: Response): Promise<void> => {
-  const { to, courseName, amount } = req.body;
-  const subject = 'Course Purchase Confirmation';
-  const html = `
+export const sendCoursePurchaseConfirmation = async (req, res) => {
+    const { to, courseName, amount } = req.body;
+    const subject = 'Course Purchase Confirmation';
+    const html = `
     <h1>Thank You for Your Purchase!</h1>
     <p>Your enrollment in "${courseName}" has been confirmed.</p>
     <p>Amount paid: $${amount.toFixed(2)}</p>
     <p>You can access your course materials by logging into your account.</p>
     <a href="${config.website.url}/dashboard">Go to Your Dashboard</a>
   `;
-  const success = await sendEmail({ to, subject, html });
-  res.json({ success });
+    const success = await sendEmail({ to, subject, html });
+    res.json({ success });
 };
-
-
-export const sendEmailVerification = async (req: Request, res: Response): Promise<void> => {
-  const success = await sendEmailVerificationInternal(req.body);
-  res.json({ success });
-  
+export const sendEmailVerification = async (req, res) => {
+    const success = await sendEmailVerificationInternal(req.body);
+    res.json({ success });
 };
-
-export const sendEmailVerificationInternal = async (
-  { to, verificationToken, verificationCode, name }: 
-  { to: string, verificationToken: string, verificationCode: string, name: string }
-): Promise<boolean> => {
-  console.log('to', to);
-  const subject = 'Welcome to Hebrew Club - Verify Your Email Address';
-  const verificationLink = `${config.website.url}/verify-email?token=${verificationToken}`;
-  const html = `
+export const sendEmailVerificationInternal = async ({ to, verificationToken, verificationCode, name }) => {
+    console.log('to', to);
+    const subject = 'Welcome to Hebrew Club - Verify Your Email Address';
+    const verificationLink = `${config.website.url}/verify-email?token=${verificationToken}`;
+    const html = `
     <html>
       <head>
         <style>
@@ -137,26 +122,24 @@ export const sendEmailVerificationInternal = async (
       </body>
     </html>
   `;
-  return await sendEmail({ to, subject, html });
+    return await sendEmail({ to, subject, html });
 };
-
-export const sendAccountRecoveryInstructions = async (req: Request, res: Response): Promise<void> => {
-  const { to, recoveryLink } = req.body;
-  const subject = 'Account Recovery Instructions';
-  const html = `
+export const sendAccountRecoveryInstructions = async (req, res) => {
+    const { to, recoveryLink } = req.body;
+    const subject = 'Account Recovery Instructions';
+    const html = `
     <h1>Account Recovery</h1>
     <p>We received a request to recover your account. Click the link below to proceed:</p>
     <a href="${recoveryLink}">Recover Your Account</a>
     <p>If you didn't request this, please ignore this email.</p>
   `;
-  const success = await sendEmail({ to, subject, html });
-  res.json({ success });
+    const success = await sendEmail({ to, subject, html });
+    res.json({ success });
 };
-
-export const sendLessonReminder = async (req: Request, res: Response): Promise<void> => {
-  const { to, studentName, teacherName, date, time } = req.body;
-  const subject = 'Lesson Reminder';
-  const html = `
+export const sendLessonReminder = async (req, res) => {
+    const { to, studentName, teacherName, date, time } = req.body;
+    const subject = 'Lesson Reminder';
+    const html = `
     <h1>Lesson Reminder</h1>
     <p>Hello ${studentName},</p>
     <p>This is a reminder for your upcoming lesson:</p>
@@ -165,14 +148,13 @@ export const sendLessonReminder = async (req: Request, res: Response): Promise<v
     <p>Teacher: ${teacherName}</p>
     <p>We look forward to seeing you!</p>
   `;
-  const success = await sendEmail({ to, subject, html });
-  res.json({ success });
+    const success = await sendEmail({ to, subject, html });
+    res.json({ success });
 };
-
-export const sendLessonCancellationNotice = async (req: Request, res: Response): Promise<void> => {
-  const { to, studentName, date, time } = req.body;
-  const subject = 'Lesson Cancellation Notice';
-  const html = `
+export const sendLessonCancellationNotice = async (req, res) => {
+    const { to, studentName, date, time } = req.body;
+    const subject = 'Lesson Cancellation Notice';
+    const html = `
     <h1>Lesson Cancellation</h1>
     <p>Hello ${studentName},</p>
     <p>We regret to inform you that your lesson scheduled for:</p>
@@ -180,37 +162,32 @@ export const sendLessonCancellationNotice = async (req: Request, res: Response):
     <p>Time: ${time}</p>
     <p>has been cancelled. Please contact us if you have any questions.</p>
   `;
-  const success = await sendEmail({ to, subject, html });
-  res.json({ success });
+    const success = await sendEmail({ to, subject, html });
+    res.json({ success });
 };
-
-export const sendPaymentConfirmation = async (req: Request, res: Response): Promise<void> => {
-  const { to, customerName, amount, date } = req.body;
-  const subject = 'Payment Confirmation';
-  const html = `
+export const sendPaymentConfirmation = async (req, res) => {
+    const { to, customerName, amount, date } = req.body;
+    const subject = 'Payment Confirmation';
+    const html = `
     <h1>Payment Confirmation</h1>
     <p>Hello ${customerName},</p>
     <p>We have received your payment of ₪${amount.toFixed(2)} on ${date}.</p>
     <p>Thank you for your business!</p>
   `;
-  const success = await sendEmail({ to, subject, html });
-  res.json({ success });
+    const success = await sendEmail({ to, subject, html });
+    res.json({ success });
 };
-
-export const sendContactFormSubmission = async (req: Request, res: Response): Promise<void> => {
+export const sendContactFormSubmission = async (req, res) => {
     const { name, email, message } = req.body;
-    
     // Basic validation
     if (!name || !email || !message) {
-      res.status(400).json({ success: false, message: 'Missing required fields' });
-      return;
+        res.status(400).json({ success: false, message: 'Missing required fields' });
+        return;
     }
-    
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      res.status(400).json({ success: false, message: 'Invalid email format' });
-      return;
+        res.status(400).json({ success: false, message: 'Invalid email format' });
+        return;
     }
-  
     const to = config.email.fromAddress;
     const subject = 'New Contact Form Submission';
     const html = `
@@ -221,20 +198,18 @@ export const sendContactFormSubmission = async (req: Request, res: Response): Pr
       <p>${message}</p>
     `;
     const success = await sendEmail({ to, subject, html });
-    
     if (success) {
-      // Send confirmation email to the user
-      const userConfirmationHtml = `
+        // Send confirmation email to the user
+        const userConfirmationHtml = `
         <h1>We've Received Your Message</h1>
         <p>Dear ${name},</p>
         <p>Thank you for contacting us. We've received your message and will get back to you soon.</p>
       `;
-      await sendEmail({ to: email, subject: 'Thank You for Contacting Us', html: userConfirmationHtml });
+        await sendEmail({ to: email, subject: 'Thank You for Contacting Us', html: userConfirmationHtml });
     }
-    
     res.json({ success });
-  };
-  export const sendWelcomeEmailWithCourseDetails = async (req: Request, res: Response): Promise<void> => {
+};
+export const sendWelcomeEmailWithCourseDetails = async (req, res) => {
     const { to, name, email, temporaryPassword, courseName, courseStartDate } = req.body;
     const subject = 'Welcome to Our Platform - Course Registration Confirmation';
     const html = `
@@ -251,14 +226,11 @@ export const sendContactFormSubmission = async (req: Request, res: Response): Pr
     `;
     const success = await sendEmail({ to, subject, html });
     res.json({ success });
-  
-  }
-
-  
-export const sendCourseWelcomeEmail = async (req: Request, res: Response): Promise<void> => {
-  const { to, userName, courseName } = req.body;
-  const subject = `Welcome to ${courseName}!`;
-  const html = `
+};
+export const sendCourseWelcomeEmail = async (req, res) => {
+    const { to, userName, courseName } = req.body;
+    const subject = `Welcome to ${courseName}!`;
+    const html = `
     <html>
       <head>
         <style>
@@ -288,6 +260,6 @@ export const sendCourseWelcomeEmail = async (req: Request, res: Response): Promi
       </body>
     </html>
   `;
-  const success = await sendEmail({ to, subject, html });
-  res.json({ success });
+    const success = await sendEmail({ to, subject, html });
+    res.json({ success });
 };

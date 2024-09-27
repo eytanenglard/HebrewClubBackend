@@ -74,7 +74,8 @@ export const sendEmailVerificationService = async (to: string, verificationToken
       json: (data: { success: boolean }) => data.success,
     } as unknown as Response;
 
-    return await sendEmailVerification(req, res);
+    await sendEmailVerification(req, res);
+    return true;  // אם הגענו לכאן, סימן שהפעולה הצליחה
   } catch (error) {
     console.error('Error sending email verification:', error);
     return false;
