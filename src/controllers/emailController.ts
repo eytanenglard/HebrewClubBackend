@@ -102,7 +102,7 @@ export const sendEmailVerificationInternal = async (
 ): Promise<boolean> => {
   console.log('to', to);
   const subject = 'Welcome to Hebrew Club - Verify Your Email Address';
-  const verificationLink = `${config.website.url}/verify-email?token=${verificationToken}`;
+  const verificationLink = `${config.website.url}/verify-email?token=${verificationToken}&email=${encodeURIComponent(to)}`;
   const html = `
     <html>
       <head>
