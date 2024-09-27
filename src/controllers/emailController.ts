@@ -90,8 +90,15 @@ export const sendCoursePurchaseConfirmation = async (req: Request, res: Response
 };
 
 
-export const sendEmailVerification = async (req: Request, res: Response): Promise<boolean> => {
-  const { to, verificationToken, verificationCode, name } = req.body;
+export const sendEmailVerification = async (req: Request, res: Response): Promise<void> => {
+  const success = await sendEmailVerificationInternal(req.body);
+  res.json({ success });
+};
+
+export const sendEmailVerificationInternal = async (
+  { to, verificationToken, verificationCode, name }: 
+  { to: string, verificationToken: string, verificationCode: string, name: string }
+): Promise<boolean> => {
   console.log('to', to);
   const subject = 'Welcome to Hebrew Club - Verify Your Email Address';
   const verificationLink = `${config.website.url}/verify-email?token=${verificationToken}`;
@@ -129,10 +136,9 @@ export const sendEmailVerification = async (req: Request, res: Response): Promis
       </body>
     </html>
   `;
-  const success = await sendEmail({ to, subject, html });
-  res.json({ success });
-  return success;
-}
+  return await sendEmail({ to, subject, html });
+};
+
 export const sendAccountRecoveryInstructions = async (req: Request, res: Response): Promise<void> => {
   const { to, recoveryLink } = req.body;
   const subject = 'Account Recovery Instructions';
