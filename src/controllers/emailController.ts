@@ -122,6 +122,7 @@ export const sendEmailVerificationInternal = async (
           <p>If the button doesn't work, you can copy and paste this link into your browser:</p>
           <p>${verificationLink}</p>
           <p>Alternatively, you can use this verification code: <strong>${verificationCode}</strong></p>
+          <p>Your email address: ${to}</p>
           <p>At Hebrew Club, we're committed to helping you achieve your language learning goals. Whether you're a beginner or looking to refine your skills, we have resources and courses tailored to your needs.</p>
           <p>Here's what you can look forward to:</p>
           <ul>
