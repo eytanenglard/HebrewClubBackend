@@ -61,9 +61,11 @@ export const registerUser = async (req: Request, res: Response): Promise<void> =
       emailVerificationToken: verificationToken,
       emailVerificationCode: verificationCode,
       emailVerificationExpires: new Date(Date.now() + 24 * 60 * 60 * 1000) // 24 hours
+    
     });
 
     await newUser.save();
+    console.log(`User saved with token: ${verificationToken} and code: ${verificationCode}`);
     console.log(`${LOG_PREFIX} New user saved. ID: ${newUser._id}`);
 
     // Send verification email
@@ -90,28 +92,36 @@ export const registerUser = async (req: Request, res: Response): Promise<void> =
   }
 };
 
+
 export const verifyEmail = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { token, code } = req.body;
+    const { token, code, email } = req.body;
     let user: UserDocument | null;
 
-    if (token) {
-      user = await User.findOne({
-        emailVerificationToken: token,
-        emailVerificationExpires: { $gt: Date.now() }
-      });
-    } else if (code) {
-      user = await User.findOne({
-        emailVerificationCode: code,
-        emailVerificationExpires: { $gt: Date.now() }
-      });
-    } else {
-      res.status(400).json({ success: false, error: 'Invalid request' });
+    if (!email) {
+      res.status(400).json({ success: false, error: 'Email is required' });
       return;
     }
 
+    user = await User.findOne({ email });
+
     if (!user) {
-      res.status(400).json({ success: false, error: 'Invalid or expired verification token or code' });
+      res.status(400).json({ success: false, error: 'User not found' });
+      return;
+    }
+
+    if (token && user.emailVerificationToken === token) {
+      if (user.emailVerificationExpires && user.emailVerificationExpires < new Date()) {
+        res.status(400).json({ success: false, error: 'Verification token has expired' });
+        return;
+      }
+    } else if (code && user.emailVerificationCode === code) {
+      if (user.emailVerificationExpires && user.emailVerificationExpires < new Date()) {
+        res.status(400).json({ success: false, error: 'Verification code has expired' });
+        return;
+      }
+    } else {
+      res.status(400).json({ success: false, error: 'Invalid verification token or code' });
       return;
     }
 
@@ -121,24 +131,30 @@ export const verifyEmail = async (req: Request, res: Response): Promise<void> =>
     user.emailVerificationExpires = undefined;
     await user.save();
 
-    // השינוי העיקרי הוא כאן:
-    const jwtToken = createToken((user._id as Types.ObjectId).toString());
+    // וידוא שה-_id קיים ומסוג Types.ObjectId
+    if (user._id && user._id instanceof Types.ObjectId) {
+      const jwtToken = createToken(user._id.toString());
 
-    res.status(200).json({ 
-      success: true, 
-      message: 'Email verified successfully',
-      token: jwtToken,
-      user: {
-        _id: user._id,
-        name: user.name,
-        email: user.email
-      }
-    });
+      res.status(200).json({ 
+        success: true, 
+        message: 'Email verified successfully',
+        token: jwtToken,
+        user: {
+          _id: user._id,
+          name: user.name,
+          email: user.email
+        }
+      });
+    } else {
+      throw new Error('Invalid user ID');
+    }
   } catch (error) {
     console.error(`${LOG_PREFIX} Error verifying email:`, error);
     res.status(500).json({ success: false, error: 'Server error' });
   }
 };
+
+// ... (המשך הקוד הקיים)
 
 export const resendVerificationEmail = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -162,7 +178,12 @@ export const resendVerificationEmail = async (req: Request, res: Response): Prom
     user.emailVerificationExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
     await user.save();
 
-    await sendEmailVerification(email, verificationToken, verificationCode, user.name);
+    await sendEmailVerificationInternal({
+      to: email,
+      verificationToken,
+      verificationCode,
+      name: user.name
+    });
 
     res.status(200).json({ success: true, message: 'Verification email resent' });
   } catch (error) {
@@ -526,6 +547,8 @@ export const resetPassword = async (req: Request, res: Response): Promise<void> 
 };
 const sendEmailVerification = async (to: string, verificationToken: string, verificationCode: string, name: string): Promise<boolean> => {
   console.log(`${LOG_PREFIX} Sending email verification to:`, to);
+  // בפונקציה sendEmailVerification ב-emailController.ts
+console.log(`Sending email with token: ${verificationToken} and code: ${verificationCode}`);
   try {
     const success = await sendEmailVerificationInternal({
       to,
