@@ -85,6 +85,7 @@ export const registerUser = async (req: Request, res: Response): Promise<void> =
         email: newUser.email
       }
     } as ApiResponse<UserType>);
+    console.log('res----',res);
     console.log(`${LOG_PREFIX} Registration successful for user: ${newUser._id}`);
   } catch (error) {
     console.error(`${LOG_PREFIX} Error registering user:`, error);
