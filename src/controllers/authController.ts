@@ -431,7 +431,7 @@ export const getCurrentUser = async (req: Request, res: Response): Promise<void>
   }
   if (!token) {
     console.log(`${LOG_PREFIX} No token provided for getting current user`);
-    res.status(200).json({ success: true, user: null, message: 'NO_TOKEN' });
+    res.status(200).json({ success: false, user: null, message: 'NO_TOKEN' });
     return;
   }
   try {
@@ -443,7 +443,7 @@ export const getCurrentUser = async (req: Request, res: Response): Promise<void>
     if (!user) {
       console.log(`${LOG_PREFIX} User not found in database`);
       res.clearCookie('accessToken');
-      res.status(200).json({ success: true, user: null, message: 'USER_NOT_FOUND' });
+      res.status(200).json({ success: false, user: null, message: 'USER_NOT_FOUND' });
       return;
     }
     
