@@ -431,7 +431,7 @@ export const getCurrentUser = async (req: Request, res: Response): Promise<void>
   }
   if (!token) {
     console.log(`${LOG_PREFIX} No token provided for getting current user`);
-    res.status(401).json({ success: false, user: null, message: 'NO_TOKEN' });
+    res.status(401).json({ success: true, user: null, message: 'NO_TOKEN' });
     return;
   }
   try {
