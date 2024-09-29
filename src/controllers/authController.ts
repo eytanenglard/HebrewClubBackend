@@ -431,7 +431,7 @@ export const getCurrentUser = async (req: Request, res: Response): Promise<void>
   }
   if (!token) {
     console.log(`${LOG_PREFIX} No token provided for getting current user`);
-    res.status(401).json({ success: true, user: null, message: 'NO_TOKEN' });
+    res.status(200).json({ success: true, user: null, message: 'NO_TOKEN' });
     return;
   }
   try {
@@ -443,7 +443,7 @@ export const getCurrentUser = async (req: Request, res: Response): Promise<void>
     if (!user) {
       console.log(`${LOG_PREFIX} User not found in database`);
       res.clearCookie('accessToken');
-      res.status(404).json({ success: false, user: null, message: 'USER_NOT_FOUND' });
+      res.status(200).json({ success: true, user: null, message: 'USER_NOT_FOUND' });
       return;
     }
     
@@ -460,7 +460,7 @@ export const getCurrentUser = async (req: Request, res: Response): Promise<void>
   } catch (error) {
     console.error(`${LOG_PREFIX} Error during token verification for current user:`, error);
     res.clearCookie('accessToken');
-    res.status(401).json({ success: false, user: null, message: 'INVALID_TOKEN' });
+    res.status(200).json({ success: true, user: null, message: 'INVALID_TOKEN' });
   }
 };
 
